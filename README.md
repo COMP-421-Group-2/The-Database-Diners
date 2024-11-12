@@ -6,8 +6,8 @@
 
 **Project Name:** Dining Hall Database
 
-**Group Members:
-**- Kayla Casey
+**Group Members:**
+- Kayla Casey
 - Haley Parker
 - Ryan Schmelzle 
 - Yashvi Tanneru
