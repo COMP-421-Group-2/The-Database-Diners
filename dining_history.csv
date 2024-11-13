@@ -1,0 +1,5 @@
+history_id,student_id,transaction_date,transaction_type,item_id,meal_type
+1,730473910,2024-11-10,meal swipe,1,lunch
+2,730560194,2024-11-11,meal swipe,2,dinner
+3,730330697,2024-11-09,meal swipe,3,breakfast
+4,730578592,2024-11-10,to-go box checkout,4,lunch
