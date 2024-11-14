@@ -1,5 +1,8 @@
-student_id,student_name,meal_balance,to_go_boxes,last_visit_date
-730473910,Kayla Casey,50.75,1,2024-11-10
-730560194,Haley Parker,120.0,0,2024-11-11
-730330697,Ryan Schmelzle,30.5,2,2024-11-09
-730578592,Yashvi Tanneru,75.0,1,2024-11-10
+pid,first_name,last_name,meal_balance,to_go_boxes_remaining,role,password_hash
+730473910,Kayla,Casey,50.75,1,student,testPassword
+730560194,Haley,Parker,120.0,0,student,computerScience
+730330697,Ryan,Schmelzle,30.5,2,student,ramses123
+730578592,Yashvi,Tanneru,75.0,1,student,abcdefg
+123456789,Gordon,Ramses,0,0,admin,ch0pped
+987654321,Guy,Feeyarey,0,0,admin,flav0rTown!!!
+246010000,Martha,Stuart,0,0,admin,sn00psDog

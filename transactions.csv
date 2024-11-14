@@ -1,5 +1,5 @@
-transaction_id,student_id,item_id,transaction_type,transaction_date,amount
-1,730473910,1,meal swipe,2024-11-10,12.0
-2,730560194,2,meal swipe,2024-11-11,12.0
-3,730330697,3,meal swipe,2024-11-09,12.0
-4,730578592,4,to-go box checkout,2024-11-10,0.0
+transaction_id,pid,item_id,transaction_type,transaction_date
+1,730473910,1,dine-in,2024-11-10
+2,730560194,2,dine-in,2024-11-11
+3,730330697,3,dine-in,2024-11-09
+4,730578592,4,to-go,2024-11-10
