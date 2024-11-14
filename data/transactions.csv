@@ -3,3 +3,4 @@ transaction_id,pid,item_id,transaction_type,transaction_date
 2,730560194,2,dine-in,2024-11-11
 3,730330697,3,dine-in,2024-11-09
 4,730578592,4,to-go,2024-11-10
+5,730330697,2,to-go,2024-11-10
