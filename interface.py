@@ -9,8 +9,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='rysch01',
-    password='SQLP4ssword1!',
+    user='root',
+    password='P3nnyTh3D0g',
     database='cafeteria',
 )
 cursor = db.cursor()
@@ -191,13 +191,13 @@ class RegistrationView(QWidget):
 
 
 class AdminView(QWidget):
-    global cursor
-    def __init__(self, switch_to_login, backend):
+    def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend):
         super().__init__()
         self.switch_to_login = switch_to_login
+        self.switch_to_manage_students = switch_to_manage_students
+        self.switch_to_view_transactions = switch_to_view_transactions
         self.backend = backend
         self.initUI()
-    
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -207,17 +207,12 @@ class AdminView(QWidget):
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
 
-        # Buttons for admin functionalities
         manage_students_button = QPushButton("Manage Students")
-        manage_students_button.clicked.connect(self.show_manage_students)
+        manage_students_button.clicked.connect(self.switch_to_manage_students)
         layout.addWidget(manage_students_button)
 
-        manage_menu_button = QPushButton("Manage Menu")
-        manage_menu_button.clicked.connect(self.show_manage_menu)
-        layout.addWidget(manage_menu_button)
-
         view_transactions_button = QPushButton("View Transactions")
-        view_transactions_button.clicked.connect(self.show_view_transactions)
+        view_transactions_button.clicked.connect(self.switch_to_view_transactions)
         layout.addWidget(view_transactions_button)
 
         logout_button = QPushButton("Logout")
@@ -226,95 +221,7 @@ class AdminView(QWidget):
 
         self.setLayout(layout)
 
-    def show_manage_students(self):
-        self.clear_screen()
-        layout = QVBoxLayout()
 
-        title = QLabel("Manage Students")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
-        layout.addWidget(title)
-
-        # Example: Display student details in a table
-        student_table = QTableWidget()
-        student_data = self.backend.get_all_students()
-        student_table.setRowCount(len(student_data))
-        student_table.setColumnCount(4)
-        student_table.setHorizontalHeaderLabels(["PID", "Name", "Balance", "To-Go Boxes"])
-
-        for row, student in enumerate(student_data):
-            for col, value in enumerate(student):
-                student_table.setItem(row, col, QTableWidgetItem(str(value)))
-
-        layout.addWidget(student_table)
-
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.initUI)
-        layout.addWidget(back_button)
-
-        self.setLayout(layout)
-
-    def show_manage_menu(self):
-        self.clear_screen()
-        layout = QVBoxLayout()
-
-        title = QLabel("Manage Menu")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
-        layout.addWidget(title)
-
-        # Example: Display menu items in a table
-        menu_table = QTableWidget()
-        menu_data = self.backend.get_all_menu_items()
-        menu_table.setRowCount(len(menu_data))
-        menu_table.setColumnCount(5)
-        menu_table.setHorizontalHeaderLabels(["Item ID", "Name", "Quantity", "Price", "Meal Type"])
-
-        for row, item in enumerate(menu_data):
-            for col, value in enumerate(item):
-                menu_table.setItem(row, col, QTableWidgetItem(str(value)))
-
-        layout.addWidget(menu_table)
-
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.initUI)
-        layout.addWidget(back_button)
-
-        self.setLayout(layout)
-
-    def show_view_transactions(self):
-        self.clear_screen()
-        layout = QVBoxLayout()
-
-        title = QLabel("View Transactions")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
-        layout.addWidget(title)
-
-        # Example: Display transactions in a table
-        transaction_table = QTableWidget()
-        transaction_data = self.backend.get_all_transactions()
-        transaction_table.setRowCount(len(transaction_data))
-        transaction_table.setColumnCount(5)
-        transaction_table.setHorizontalHeaderLabels(
-            ["Transaction ID", "Student ID", "Item ID", "Type", "Amount"]
-        )
-
-        for row, transaction in enumerate(transaction_data):
-            for col, value in enumerate(transaction):
-                transaction_table.setItem(row, col, QTableWidgetItem(str(value)))
-
-        layout.addWidget(transaction_table)
-
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.initUI)
-        layout.addWidget(back_button)
-
-        self.setLayout(layout)
-
-    def clear_screen(self):
-        # Clear the current screen to show new content
-        for i in reversed(range(self.layout().count())):
-            widget = self.layout().itemAt(i).widget()
-            if widget is not None:
-                widget.deleteLater()
 
 
 class StudentView(QWidget):
@@ -463,8 +370,6 @@ class StudentView(QWidget):
 
 
 class MainWindow(QWidget):
-    global cursor
-
     def __init__(self):
         super().__init__()
         self.backend = DatabaseBackend()
@@ -478,12 +383,15 @@ class MainWindow(QWidget):
 
         self.login_page = LoginPage(self.show_admin_view, self.show_student_view, self.show_registration_view)
         self.registration_view = RegistrationView(self.show_login_page, self.backend)
-
-        self.admin_view = AdminView(self.show_login_page, self.backend)
-        self.student_view = None  # Initialized dynamically
+        self.admin_view = AdminView(self.show_login_page, self.show_manage_students, self.show_view_transactions, self.backend)
+        self.manage_students_page = ManageStudentsPage(self.show_admin_view)
+        self.view_transactions_page = ViewTransactionsPage(self.show_admin_view, self.backend)
 
         self.stacked_widget.addWidget(self.login_page)
+        self.stacked_widget.addWidget(self.registration_view)
         self.stacked_widget.addWidget(self.admin_view)
+        self.stacked_widget.addWidget(self.manage_students_page)
+        self.stacked_widget.addWidget(self.view_transactions_page)
 
         layout = QVBoxLayout()
         layout.addWidget(self.stacked_widget)
@@ -495,20 +403,22 @@ class MainWindow(QWidget):
         self.stacked_widget.setCurrentWidget(self.login_page)
 
     def show_registration_view(self):
-        self.registration_view = RegistrationView(self.show_login_page, self.backend)
-        self.stacked_widget.addWidget(self.registration_view)
         self.stacked_widget.setCurrentWidget(self.registration_view)
 
     def show_admin_view(self):
-        self.admin_view = AdminView(self.show_login_page, self.backend)
-        self.stacked_widget.addWidget(self.admin_view)
         self.stacked_widget.setCurrentWidget(self.admin_view)
-        
-    
+
+    def show_manage_students(self):
+        self.stacked_widget.setCurrentWidget(self.manage_students_page)
+
+    def show_view_transactions(self):
+        self.stacked_widget.setCurrentWidget(self.view_transactions_page)
+
     def show_student_view(self, pid):
         self.student_view = StudentView(pid, self.show_login_page, self.backend)
         self.stacked_widget.addWidget(self.student_view)
         self.stacked_widget.setCurrentWidget(self.student_view)
+
 
 
 class DatabaseBackend:
@@ -568,11 +478,11 @@ class DatabaseBackend:
 
         # Insert into Transactions and DiningHistory
         cursor.execute(
-            "INSERT INTO Transactions (student_id, item_id, transaction_type, transaction_date, amount) VALUES (%s, %s, %s, CURDATE(), %s)",
-            (pid, item_id, transaction_type, amount)
+            "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, CURDATE())",
+            (pid, item_id, transaction_type)
         )
         cursor.execute(
-            "INSERT INTO DiningHistory (student_id, transaction_date, transaction_type, item_id, meal_type) VALUES (%s, CURDATE(), %s, %s, %s)",
+            "INSERT INTO DiningHistory (pid, transaction_date, transaction_type, item_id, meal_type) VALUES (%s, CURDATE(), %s, %s, %s)",
             (pid, transaction_type, item_id, "breakfast")  # Adjust meal_type dynamically if needed
         )
         self.db.commit()
@@ -589,11 +499,125 @@ class DatabaseBackend:
 
     def get_all_transactions(self):
         query = """
-        SELECT transaction_id, student_id, item_id, transaction_type, amount
+        SELECT transaction_id, pid, item_id, transaction_type
         FROM Transactions
         """
         cursor.execute(query)
         return cursor.fetchall()
+    
+
+class ManageStudentsPage(QWidget):
+    def __init__(self, switch_to_admin):
+        super().__init__()
+        self.switch_to_admin = switch_to_admin
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        title = QLabel("Manage Students")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
+        layout.addWidget(title)
+
+        pid_label = QLabel("Enter Student PID:")
+        layout.addWidget(pid_label)
+        self.pid_input = QLineEdit()
+        layout.addWidget(self.pid_input)
+
+        add_togo_box_button = QPushButton("Add To-Go Box")
+        add_togo_box_button.clicked.connect(self.add_togo_box)
+        layout.addWidget(add_togo_box_button)
+
+        add_balance_button = QPushButton("Add Meal Balance")
+        add_balance_button.clicked.connect(self.add_balance)
+        layout.addWidget(add_balance_button)
+
+        delete_student_button = QPushButton("Delete Student")
+        delete_student_button.clicked.connect(self.delete_student)
+        layout.addWidget(delete_student_button)
+
+        self.student_action_message = QLabel("")
+        layout.addWidget(self.student_action_message)
+
+        back_button = QPushButton("Back")
+        back_button.clicked.connect(self.switch_to_admin)
+        layout.addWidget(back_button)
+
+        self.setLayout(layout)
+
+    def add_togo_box(self):
+        pid = self.pid_input.text()
+        try:
+            cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining + 1 WHERE pid = %s", (pid,))
+            if cursor.rowcount == 0:
+                self.student_action_message.setText("Error: Student not found.")
+            else:
+                db.commit()
+                self.student_action_message.setText("To-Go Box added successfully!")
+        except Exception as e:
+            self.student_action_message.setText(f"Error: {e}")
+
+    def add_balance(self):
+        pid = self.pid_input.text()
+        try:
+            balance, ok = QInputDialog.getDouble(self, "Add Balance", "Enter Amount:", 0.0, 0, 1000, 2)
+            if ok:
+                cursor.execute("UPDATE Students SET meal_balance = meal_balance + %s WHERE pid = %s", (balance, pid))
+                if cursor.rowcount == 0:
+                    self.student_action_message.setText("Error: Student not found.")
+                else:
+                    db.commit()
+                    self.student_action_message.setText(f"${balance:.2f} added to balance!")
+        except Exception as e:
+            self.student_action_message.setText(f"Error: {e}")
+
+    def delete_student(self):
+        pid = self.pid_input.text()
+        try:
+            cursor.execute("DELETE FROM Students WHERE pid = %s", (pid,))
+            if cursor.rowcount == 0:
+                self.student_action_message.setText("Error: Student not found.")
+            else:
+                db.commit()
+                self.student_action_message.setText("Student deleted successfully!")
+        except Exception as e:
+            self.student_action_message.setText(f"Error: {e}")
+
+
+class ViewTransactionsPage(QWidget):
+    def __init__(self, switch_to_admin, backend):
+        super().__init__()
+        self.switch_to_admin = switch_to_admin
+        self.backend = backend
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        title = QLabel("Transaction History")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
+        layout.addWidget(title)
+
+        transaction_table = QTableWidget()
+        transaction_data = self.backend.get_all_transactions()
+        transaction_table.setRowCount(len(transaction_data))
+        transaction_table.setColumnCount(5)
+        transaction_table.setHorizontalHeaderLabels(
+            ["Transaction ID", "Student PID", "Item ID", "Type", "Date"]
+        )
+
+        for row, transaction in enumerate(transaction_data):
+            for col, value in enumerate(transaction):
+                transaction_table.setItem(row, col, QTableWidgetItem(str(value)))
+
+        layout.addWidget(transaction_table)
+
+        back_button = QPushButton("Back")
+        back_button.clicked.connect(self.switch_to_admin)
+        layout.addWidget(back_button)
+
+        self.setLayout(layout)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
