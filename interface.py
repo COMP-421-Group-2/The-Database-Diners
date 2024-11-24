@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QTextEdit, QTableWidget, QTableWidgetItem,
-    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox
+    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy
 )
 from PyQt5.QtCore import Qt, QDate
 import pymysql
@@ -27,35 +27,43 @@ class LoginPage(QWidget):
     def initUI(self):
         layout = QVBoxLayout()
 
+        login_widget=QWidget()
+        login_widget.setFixedSize(400, 300) 
+        login_layout=QVBoxLayout(login_widget)
+        
+
         self.title_label = QLabel('Login Page', self)
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
-        layout.addWidget(self.title_label)
+        login_layout.addWidget(self.title_label)
 
         self.pid_input = QLineEdit(self)
         self.pid_input.setPlaceholderText('Enter PID')
-        layout.addWidget(self.pid_input)
+        login_layout.addWidget(self.pid_input)
 
         self.password_input = QLineEdit(self)
         self.password_input.setPlaceholderText('Enter Password')
         self.password_input.setEchoMode(QLineEdit.Password)
-        layout.addWidget(self.password_input)
+        login_layout.addWidget(self.password_input)
 
         self.error_display = QTextEdit(self)
         self.error_display.setReadOnly(True)
-        self.error_display.setStyleSheet('color: red;')
-        layout.addWidget(self.error_display)
+        self.error_display.setStyleSheet('background: transparent; color: green; border:none;')
+        self.error_display.setFixedHeight(30)
+        self.error_display.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
+        login_layout.addWidget(self.error_display)
 
         self.login_button = QPushButton('Login', self)
         self.login_button.clicked.connect(self.handle_login)
-        layout.addWidget(self.login_button)
+        login_layout.addWidget(self.login_button)
 
         self.switch_to_register_button = QPushButton('Register?', self)
         self.switch_to_register_button.clicked.connect(self.switch_to_register)
-        layout.addWidget(self.switch_to_register_button)
+        login_layout.addWidget(self.switch_to_register_button)
 
-
+        layout.addWidget(login_widget, alignment=Qt.AlignCenter)
         self.setLayout(layout)
+        
 
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
@@ -96,52 +104,58 @@ class RegistrationView(QWidget):
     def initUI(self):
         layout = QVBoxLayout()
 
+        registration_widget=QWidget()
+        registration_widget.setFixedSize(400, 500) 
+        registration_layout=QVBoxLayout(registration_widget)
+
         self.title_label = QLabel('Registration', self)
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
-        layout.addWidget(self.title_label)
+        registration_layout.addWidget(self.title_label)
         
         self.pid_input = QLineEdit(self)
         self.pid_input.setPlaceholderText('Enter 9 Digit PID Number')
-        layout.addWidget(self.pid_input)
+        registration_layout.addWidget(self.pid_input)
 
         self.first_input = QLineEdit(self)
         self.first_input.setPlaceholderText('First Name')
-        layout.addWidget(self.first_input)
+        registration_layout.addWidget(self.first_input)
 
         self.last_input = QLineEdit(self)
         self.last_input.setPlaceholderText('Last Name')
-        layout.addWidget(self.last_input)
+        registration_layout.addWidget(self.last_input)
 
         self.password_input1 = QLineEdit(self)
         self.password_input1.setPlaceholderText('Enter Password (9-24 characters)')
         self.password_input1.setEchoMode(QLineEdit.Password)
-        layout.addWidget(self.password_input1)
+        registration_layout.addWidget(self.password_input1)
 
         self.password_input2 = QLineEdit(self)
         self.password_input2.setPlaceholderText('Re-enter Password')
         self.password_input2.setEchoMode(QLineEdit.Password)
-        layout.addWidget(self.password_input2)
+        registration_layout.addWidget(self.password_input2)
 
 
         self.error_display = QTextEdit(self)
         self.error_display.setReadOnly(True)
-        self.error_display.setStyleSheet('color: red;')
-        layout.addWidget(self.error_display)
-
+        self.error_display.setStyleSheet('color: red; border:none;background: transparent;')
+        registration_layout.addWidget(self.error_display)
+        self.error_display.setFixedHeight(30)
+        self.error_display.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
 
         self.registration_button = QPushButton('Register', self)
         self.registration_button.clicked.connect(self.handle_registration)
-        layout.addWidget(self.registration_button)
+        registration_layout.addWidget(self.registration_button)
 
 
 
       
 
-        logout_button = QPushButton("Login?")
-        logout_button.clicked.connect(self.switch_to_login)
-        layout.addWidget(logout_button)
+        login_button = QPushButton("Login?")
+        login_button.clicked.connect(self.switch_to_login)
+        registration_layout.addWidget(login_button)
 
+        layout.addWidget(registration_widget, alignment=Qt.AlignCenter)
         self.setLayout(layout)
 
     
@@ -149,7 +163,7 @@ class RegistrationView(QWidget):
         return hashlib.sha256(password.encode()).hexdigest()
 
     def handle_registration(self):
-        self.error_display.setStyleSheet('color: red;')
+        self.error_display.setStyleSheet('color: red; border:none;background: transparent;')
 
         entered_pid=self.pid_input.text()
         entered_first = self.first_input.text()
@@ -184,8 +198,8 @@ class RegistrationView(QWidget):
                 print(new_user_details)
                 cursor.execute('INSERT INTO Students (pid, first_name, last_name, password_hash) VALUES (%s, %s, %s, %s);', new_user_details)
                 db.commit()
-                self.error_display.setStyleSheet('color: green;')
-                self.error_display.setText('Registration Successful. Please return to the login page to sign in.')
+                self.error_display.setStyleSheet('background: transparent; color: green; border:none;')
+                self.error_display.setText('Registration Successful. Please sign in.')
         
 
 
@@ -243,16 +257,16 @@ class StudentView(QWidget):
 
 
     def initUI(self):
-        layout = QVBoxLayout()
-
-        self.title_label = QLabel('Student View', self)
+        main_layout = QVBoxLayout()
+        self.title_label = QLabel('Student Dashboard', self)
         self.title_label.setAlignment(Qt.AlignCenter)
-        self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
-        layout.addWidget(self.title_label)
-
-        # Display student details
-
+        self.title_label.setStyleSheet('font-size: 24px; font-weight: bold;')
+        main_layout.addWidget(self.title_label)
         
+        header=QHBoxLayout()
+
+
+       
         current_user=self.backend.get_user_info(self.pid)
         # print(current_user)
         current_user={
@@ -272,30 +286,56 @@ class StudentView(QWidget):
         account_balance = current_user['balance']
         togo_boxes = current_user['to_go_remaining']
 
-        layout.addWidget(QLabel(f"Name: {student_name}"))
-        layout.addWidget(QLabel(f"PID: {pid}"))
-        layout.addWidget(QLabel(f"Account Balance: ${account_balance:.2f}"))
-        layout.addWidget(QLabel(f"To-Go Boxes Available: {togo_boxes}"))
+
+        headerL=QVBoxLayout()
+        headerL.addWidget(QLabel(f"Name: {student_name}"))
+        headerL.addWidget(QLabel(f"PID: {pid}"))
+        
+        headerR=QVBoxLayout()
+        ab_label=QLabel(f"Account Balance: ${account_balance:.2f}")
+        ab_label.setAlignment(Qt.AlignRight)
+        tg_label=QLabel(f"To-Go Boxes Available: {togo_boxes}")
+        tg_label.setAlignment(Qt.AlignRight)
+
+        headerR.addWidget(ab_label)
+        headerR.addWidget(tg_label)
 
 
-        self.date_label = QLabel(f"Menu for {self.selected_date.toString('yyyy-MM-dd')}", self)
-        layout.addWidget(self.date_label)
+
+        left_widget = QWidget()
+        left_widget.setLayout(headerL)
+        right_widget = QWidget()
+        right_widget.setLayout(headerR)
+        header.addWidget(left_widget)
+        header.addWidget(right_widget)
+
+        menu_layout=QVBoxLayout()
+        
+        # self.date_label = QLabel(f"Menu for {self.selected_date.toString('yyyy-MM-dd')}", self)
+        self.date_label = QLabel("Daily Menu", self)
+        self.date_label.setStyleSheet('font-size: 20px; font-weight: bold;')
+
+        menu_layout.addWidget(self.date_label)
 
         self.calendar = QCalendarWidget(self)
         self.calendar.setGridVisible(True)
         self.calendar.setSelectedDate(self.selected_date)  # Set today's date
         self.calendar.clicked.connect(self.select_date)
-        layout.addWidget(self.calendar)
+        menu_layout.addWidget(self.calendar)
 
         self.menu=QTableWidget(self)
         self.menu.setColumnCount(4)
         self.menu.setHorizontalHeaderLabels(['Meal', 'Item', 'Price', 'Calories'])
-        layout.addWidget(self.menu)
+        menu_layout.addWidget(self.menu)
 
         self.update_menu_based_on_date(self.selected_date)
 
-        self.payment_history_label = QLabel(f"Payment History", self)
-        layout.addWidget(self.payment_history_label)
+        payment_layout=QVBoxLayout()
+
+        self.payment_history_label = QLabel(f"Personal Payment History", self)
+        self.payment_history_label.setStyleSheet('font-size: 20px; font-weight: bold;')
+
+        payment_layout.addWidget(self.payment_history_label)
         self.payment_history=QTableWidget(self)
         self.payment_history.setColumnCount(5)
         self.payment_history.setHorizontalHeaderLabels(['Date', 'Meal', 'Item', 'Price', 'Type'])
@@ -310,23 +350,36 @@ class StudentView(QWidget):
             self.payment_history.setItem(ri, 3, QTableWidgetItem(str(rdata[10])))
             self.payment_history.setItem(ri, 4, QTableWidgetItem(str(rdata[3])))
 
-        layout.addWidget(self.payment_history)
+        payment_layout.addWidget(self.payment_history)
 
 
         # Logout button
         self.logout_button = QPushButton('Logout', self)
         self.logout_button.clicked.connect(self.switch_to_login)
         current_user=None
-        layout.addWidget(self.logout_button)
 
-        self.setLayout(layout)
+        body=QHBoxLayout()
+        spacer = QWidget()
+        spacer.setFixedWidth(10)
+        body.addWidget(spacer)
+        body.addLayout(payment_layout)
+        body.addWidget(spacer)
+        body.addLayout(menu_layout)
+        body.addWidget(spacer)
+
+        main_layout.addLayout(header)
+        main_layout.addLayout(body)
+        main_layout.addWidget(self.logout_button)
+
+        self.setLayout(main_layout)
 
     def select_date(self, date):
         """
         Update the selected date when the user clicks on a date in the calendar.
         """
         self.selected_date = date
-        self.date_label.setText(f"Selected Date: {self.selected_date.toString('yyyy-MM-dd')}")
+        # self.date_label.setText(f"Menu for {self.selected_date.toString('yyyy-MM-dd')}")
+        self.date_label = QLabel("Daily Menu", self)
         self.update_menu_based_on_date(self.selected_date)
 
     def update_menu_based_on_date(self, date):
