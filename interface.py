@@ -281,6 +281,10 @@ class StudentView(QWidget):
         layout.addWidget(QLabel(f"Account Balance: ${account_balance:.2f}"))
         layout.addWidget(QLabel(f"To-Go Boxes Available: {togo_boxes}"))
 
+
+        self.date_label = QLabel(f"Menu for {self.selected_date.toString('yyyy-MM-dd')}", self)
+        layout.addWidget(self.date_label)
+
         # Add calendar widget with today's date selected
         self.calendar = QCalendarWidget(self)
         self.calendar.setGridVisible(True)
@@ -289,8 +293,6 @@ class StudentView(QWidget):
         layout.addWidget(self.calendar)
 
         # Label to display the currently selected date
-        self.date_label = QLabel(f"Selected Date: {self.selected_date.toString('yyyy-MM-dd')}", self)
-        layout.addWidget(self.date_label)
 
         self.menu=QTableWidget(self)
         self.menu.setColumnCount(4)
@@ -301,32 +303,35 @@ class StudentView(QWidget):
         self.update_menu_based_on_date(self.selected_date)
 
     
+        self.payment_history_label = QLabel(f"Payment History", self)
+        layout.addWidget(self.payment_history_label)
 
         self.payment_history=QTableWidget(self)
-        self.payment_history.setColumnCount(4)
-        self.menu.setHorizontalHeaderLabels(['Date', 'Item', 'Price', ''])
+        self.payment_history.setColumnCount(5)
+        self.payment_history.setHorizontalHeaderLabels(['Date', 'Meal', 'Item', 'Price', 'Type'])
         cursor.execute('SELECT * FROM Transactions T LEFT JOIN Menu M ON M.item_id = T.item_id WHERE T.pid = %s', pid)
         result=cursor.fetchall()
+        print(result[0])
         print('here', result[0][4], result[0][7], result[0][6],  result[0][10], result[0][3])
-        # 3 (type)
         # 4 (date)
+        # 7 (meal)
         # 6 (item)
         # 10 (price)
-        # 7 (meal)
+        # 3 (type)
+ 
 
 
-        # self.menu.setRowCount(len(result))
+        self.payment_history.setRowCount(len(result))
         # # go through the each row and column data
-        # for ri, rdata in enumerate(result):
-        #     self.menu.setItem(ri, 0, QTableWidgetItem(str(rdata[3])))
-        #     self.menu.setItem(ri, 1, QTableWidgetItem(str(rdata[1])))
-        #     self.menu.setItem(ri, 2, QTableWidgetItem(str(rdata[5])))
-        #     self.menu.setItem(ri, 3, QTableWidgetItem(str(rdata[2])))
+        for ri, rdata in enumerate(result):
+            self.payment_history.setItem(ri, 0, QTableWidgetItem(str(rdata[4])))
+            self.payment_history.setItem(ri, 1, QTableWidgetItem(str(rdata[8])))
+            self.payment_history.setItem(ri, 2, QTableWidgetItem(str(rdata[6])))
+            self.payment_history.setItem(ri, 3, QTableWidgetItem(str(rdata[10])))
+            self.payment_history.setItem(ri, 4, QTableWidgetItem(str(rdata[3])))
 
 
-
-
-
+        layout.addWidget(self.payment_history)
 
 
         # Logout button
