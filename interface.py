@@ -48,7 +48,7 @@ class LoginPage(QWidget):
 
         self.error_display = QTextEdit(self)
         self.error_display.setReadOnly(True)
-        self.error_display.setStyleSheet('background: transparent; color: green; border:none;')
+        self.error_display.setStyleSheet('background: transparent; color: red; border:none;')
         self.error_display.setFixedHeight(30)
         self.error_display.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
         login_layout.addWidget(self.error_display)
@@ -226,19 +226,28 @@ class AdminView(QWidget):
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
         
+        orderLayout = QVBoxLayout()
 
+        buttonWidget = QWidget()
+
+        buttonLayout = QHBoxLayout(buttonWidget)
         manage_students_button = QPushButton("Manage Students")
         manage_students_button.clicked.connect(self.switch_to_manage_students)
-        layout.addWidget(manage_students_button)
+        manage_students_button.setFixedHeight(200) 
+        buttonLayout.addWidget(manage_students_button)
 
         view_transactions_button = QPushButton("View Transactions")
         view_transactions_button.clicked.connect(self.switch_to_view_transactions)
-        layout.addWidget(view_transactions_button)
+        view_transactions_button.setFixedHeight(200) 
+        buttonLayout.addWidget(view_transactions_button)
 
         logout_button = QPushButton("Logout")
         logout_button.clicked.connect(self.switch_to_login)
-        layout.addWidget(logout_button)
+        logout_button.setFixedHeight(200) 
+        buttonLayout.addWidget(logout_button)
 
+        buttonWidget.setFixedHeight(300) 
+        layout.addWidget(buttonWidget)
         self.setLayout(layout)
 
 
