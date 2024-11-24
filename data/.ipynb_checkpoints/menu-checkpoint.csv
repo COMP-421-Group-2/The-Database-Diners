@@ -1,0 +1,5 @@
+item_id,item_name,calories_per_serving,meal_type,available_date, price
+1,Pasta Primavera,450,lunch,2024-11-12, 11.00
+2,Grilled Chicken Sandwich,600,dinner,2024-11-12, 8.00
+3,Oatmeal,150,breakfast,2024-11-12, 5.00
+4,Vegan Burrito Bowl,500,lunch,2024-11-13, 9.00
