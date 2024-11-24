@@ -292,8 +292,42 @@ class StudentView(QWidget):
         self.date_label = QLabel(f"Selected Date: {self.selected_date.toString('yyyy-MM-dd')}", self)
         layout.addWidget(self.date_label)
 
+        self.menu=QTableWidget(self)
+        self.menu.setColumnCount(4)
+        self.menu.setHorizontalHeaderLabels(['Meal', 'Item', 'Price', 'Calories'])
+        layout.addWidget(self.menu)
+
         # Today's menu based on selected_date
         self.update_menu_based_on_date(self.selected_date)
+
+    
+
+        self.payment_history=QTableWidget(self)
+        self.payment_history.setColumnCount(4)
+        self.menu.setHorizontalHeaderLabels(['Date', 'Item', 'Price', ''])
+        cursor.execute('SELECT * FROM Transactions T LEFT JOIN Menu M ON M.item_id = T.item_id WHERE T.pid = %s', pid)
+        result=cursor.fetchall()
+        print('here', result[0][4], result[0][7], result[0][6],  result[0][10], result[0][3])
+        # 3 (type)
+        # 4 (date)
+        # 6 (item)
+        # 10 (price)
+        # 7 (meal)
+
+
+        # self.menu.setRowCount(len(result))
+        # # go through the each row and column data
+        # for ri, rdata in enumerate(result):
+        #     self.menu.setItem(ri, 0, QTableWidgetItem(str(rdata[3])))
+        #     self.menu.setItem(ri, 1, QTableWidgetItem(str(rdata[1])))
+        #     self.menu.setItem(ri, 2, QTableWidgetItem(str(rdata[5])))
+        #     self.menu.setItem(ri, 3, QTableWidgetItem(str(rdata[2])))
+
+
+
+
+
+
 
         # Logout button
         self.logout_button = QPushButton('Logout', self)
@@ -314,10 +348,26 @@ class StudentView(QWidget):
         """
         Query and print today's menu based on the selected date.
         """
+        # Clear rows
+        self.menu.setRowCount(0)
         cursor.execute('SELECT * FROM Menu M WHERE available_date=%s', date.toString('yyyy-MM-dd'))
         result = cursor.fetchall()
-        print("Menu for the selected date:", result)
-        
+
+
+        meal = {'breakfast': 0, 'lunch': 1, 'dinner': 2}
+        result = sorted(result, key=lambda x: meal.get(x[3], 3))  # Default to 3 for unknown types
+
+
+        self.menu.setRowCount(len(result))
+        # go through the each row and column data
+        for ri, rdata in enumerate(result):
+            self.menu.setItem(ri, 0, QTableWidgetItem(str(rdata[3])))
+            self.menu.setItem(ri, 1, QTableWidgetItem(str(rdata[1])))
+            self.menu.setItem(ri, 2, QTableWidgetItem(str(rdata[5])))
+            self.menu.setItem(ri, 3, QTableWidgetItem(str(rdata[2])))
+
+
+
     def show_manage_students_screen(self):
         self.clear_screen()
         layout = QVBoxLayout()
