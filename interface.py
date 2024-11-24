@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QTextEdit, QTableWidget, QTableWidgetItem,
-    QStackedWidget, QHBoxLayout,QCalendarWidget
+    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox
 )
 from PyQt5.QtCore import Qt, QDate
 import pymysql
@@ -9,8 +9,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='root',
-    password='P3nnyTh3D0g',
+    user='rysch01',
+    password='SQLP4ssword1!',
     database='cafeteria',
 )
 cursor = db.cursor()
@@ -191,6 +191,7 @@ class RegistrationView(QWidget):
 
 
 class AdminView(QWidget):
+    global cursor
     def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend):
         super().__init__()
         self.switch_to_login = switch_to_login
@@ -202,10 +203,15 @@ class AdminView(QWidget):
     def initUI(self):
         layout = QVBoxLayout()
 
+
+        # layout.addWidget(QLabel(f"Name: {student_name}"))
+        # layout.addWidget(QLabel(f"PID: {pid}"))
+
         self.title_label = QLabel('Admin Dashboard', self)
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
+        
 
         manage_students_button = QPushButton("Manage Students")
         manage_students_button.clicked.connect(self.switch_to_manage_students)
@@ -377,7 +383,7 @@ class MainWindow(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Cafeteria Database Interface')
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(480, 480, 1536, 1024)
 
         self.stacked_widget = QStackedWidget()
 
@@ -488,7 +494,7 @@ class DatabaseBackend:
         self.db.commit()
 
     def get_all_students(self):
-        query = "SELECT pid, CONCAT(first_name, ' ', last_name), meal_balance, to_go_boxes FROM Students"
+        query = "SELECT pid, CONCAT(first_name, ' ', last_name), meal_balance, to_go_boxes_remaining FROM Students where role='student'"
         cursor.execute(query)
         return cursor.fetchall()
 
@@ -497,15 +503,26 @@ class DatabaseBackend:
         cursor.execute(query)
         return cursor.fetchall()
 
+    
     def get_all_transactions(self):
         query = """
-        SELECT transaction_id, pid, item_id, transaction_type
-        FROM Transactions
+        SELECT T.transaction_id, T.pid, T.item_id, T.transaction_type, T.item_id,
+               S.first_name, S.last_name, M.item_name, T.transaction_date, M.price From Transactions T left join Students S ON T.pid=S.pid Left Join Menu M on T.item_id=M.item_id
         """
+
+
         cursor.execute(query)
         return cursor.fetchall()
     
+    def get_transactions_by_pid(self, pid):
+        print(pid)
+        cursor.execute("""
+        SELECT T.transaction_id, T.pid, T.item_id, T.transaction_type, T.item_id,
+               S.first_name, S.last_name, M.item_name, T.transaction_date, M.price From Transactions T left join Students S ON T.pid=S.pid Left Join Menu M on T.item_id=M.item_id Where T.pid=%s
+        """, (str(pid)))
 
+        return cursor.fetchall()
+    
 class ManageStudentsPage(QWidget):
     def __init__(self, switch_to_admin):
         super().__init__()
@@ -591,33 +608,93 @@ class ViewTransactionsPage(QWidget):
         self.backend = backend
         self.initUI()
 
+class ViewTransactionsPage(QWidget):
+    def __init__(self, switch_to_admin, backend):
+        super().__init__()
+        self.switch_to_admin = switch_to_admin
+        self.backend = backend
+        self.initUI()
+
     def initUI(self):
         layout = QVBoxLayout()
 
+        # Title
         title = QLabel("Transaction History")
         title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
         layout.addWidget(title)
 
-        transaction_table = QTableWidget()
-        transaction_data = self.backend.get_all_transactions()
-        transaction_table.setRowCount(len(transaction_data))
-        transaction_table.setColumnCount(5)
-        transaction_table.setHorizontalHeaderLabels(
-            ["Transaction ID", "Student PID", "Item ID", "Type", "Date"]
+        # Student dropdown
+        student_data = self.backend.get_all_students()
+        students = ['All Students']
+        for sd in student_data:
+            students.append(f"{sd[0]} - {sd[1]}")  # Format as "PID - Name"
+
+        self.student_dropdown = QComboBox(self)
+        self.student_dropdown.addItems(students)
+        self.student_dropdown.currentTextChanged.connect(self.handle_student_selection)
+        layout.addWidget(self.student_dropdown)
+
+        # Transaction table
+        self.transaction_table = QTableWidget()
+        self.transaction_table.setColumnCount(7)
+        self.transaction_table.setHorizontalHeaderLabels(
+            ["Transaction ID", "Date", "PID", "Student Name", "Item Name", "Price", "Type"]
         )
+        layout.addWidget(self.transaction_table)
 
-        for row, transaction in enumerate(transaction_data):
-            for col, value in enumerate(transaction):
-                transaction_table.setItem(row, col, QTableWidgetItem(str(value)))
-
-        layout.addWidget(transaction_table)
-
+        # Back button
         back_button = QPushButton("Back")
         back_button.clicked.connect(self.switch_to_admin)
         layout.addWidget(back_button)
 
         self.setLayout(layout)
 
+        # Load all transactions by default
+        self.load_transactions()
+
+    def load_transactions(self, pid=None):
+        print(pid)
+        if pid == 'All Students' or pid == '' or pid is None:
+            transaction_data = self.backend.get_all_transactions()  # Get all transactions
+        else:
+            transaction_data = self.backend.get_transactions_by_pid(pid)  # Get transactions for a specific student
+
+        # Clear the table
+        self.transaction_table.setRowCount(0)
+
+        # Populate the table
+        for row, transaction in enumerate(transaction_data):
+            tid = transaction[0]
+            tdate = transaction[8]
+            pid = transaction[1]
+            sname = f"{transaction[5]} {transaction[6]}"
+            mname = transaction[9]
+            mprice = transaction[7]
+            ttype = transaction[3]
+
+            self.transaction_table.insertRow(row)
+            self.transaction_table.setItem(row, 0, QTableWidgetItem(str(tid)))
+            self.transaction_table.setItem(row, 1, QTableWidgetItem(str(tdate)))
+            self.transaction_table.setItem(row, 2, QTableWidgetItem(str(pid)))
+            self.transaction_table.setItem(row, 3, QTableWidgetItem(str(sname)))
+            self.transaction_table.setItem(row, 4, QTableWidgetItem(str(mname)))
+            self.transaction_table.setItem(row, 5, QTableWidgetItem(str(mprice)))
+            self.transaction_table.setItem(row, 6, QTableWidgetItem(str(ttype)))
+
+    def handle_student_selection(self, selected_student):
+        """
+        Handle student selection from the dropdown and filter the table.
+        """
+        if not selected_student.strip():  # Ignore empty selection
+            self.load_transactions()  # Load all transactions
+            return
+
+        # Extract PID from the selected entry
+        pid = selected_student.split(" - ")[0]
+        print(f"Selected Student PID: {pid}")
+
+        # Load transactions for the selected student
+        self.load_transactions(pid)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
