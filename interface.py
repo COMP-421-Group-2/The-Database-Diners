@@ -7,13 +7,13 @@ import pymysql
 import sys
 import hashlib
 
-connection = pymysql.connect(
+db = pymysql.connect(
     host='localhost',
     user='rysch01',
     password='SQLP4ssword1!',
     database='cafeteria',
 )
-cursor = connection.cursor()
+cursor = db.cursor()
 
 class LoginPage(QWidget):
     global cursor
@@ -41,6 +41,11 @@ class LoginPage(QWidget):
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password_input)
 
+        self.error_display = QTextEdit(self)
+        self.error_display.setReadOnly(True)
+        self.error_display.setStyleSheet('color: red;')
+        layout.addWidget(self.error_display)
+
         self.login_button = QPushButton('Login', self)
         self.login_button.clicked.connect(self.handle_login)
         layout.addWidget(self.login_button)
@@ -49,35 +54,9 @@ class LoginPage(QWidget):
         self.switch_to_register_button.clicked.connect(self.switch_to_register)
         layout.addWidget(self.switch_to_register_button)
 
-        self.error_display = QTextEdit(self)
-        self.error_display.setReadOnly(True)
-        self.error_display.setStyleSheet('color: red;')
-        layout.addWidget(self.error_display)
 
         self.setLayout(layout)
 
-    def handle_login(self):
-        pid = self.pid_input.text()
-        password = self.password_input.text()
-        self.error_display.clear()
-
-        try:
-            cursor.execute("SELECT role, password_hash FROM Students WHERE pid = %s", (pid,))
-            result = cursor.fetchone()
-
-            if result:
-                role, password_hash = result
-                if password_hash == password:  # Simplified for now; replace with hashed check
-                    if role == 'admin':
-                        self.switch_to_admin()
-                    else:
-                        self.switch_to_student(pid)
-                else:
-                    self.error_display.setText("Error: Incorrect password.")
-            else:
-                self.error_display.setText("Error: PID not found.")
-        except Exception as e:
-            self.error_display.setText(f"Error: {e}")
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
@@ -108,6 +87,7 @@ class LoginPage(QWidget):
 
 class RegistrationView(QWidget):
     global cursor
+    global db
     def __init__(self, switch_to_login, backend):
         super().__init__()
         self.switch_to_login = switch_to_login
@@ -120,25 +100,93 @@ class RegistrationView(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
+        
+        self.pid_input = QLineEdit(self)
+        self.pid_input.setPlaceholderText('Enter 9 Digit PID Number')
+        layout.addWidget(self.pid_input)
 
-        # # Buttons for admin functionalities
-        # manage_students_button = QPushButton("Manage Students")
-        # manage_students_button.clicked.connect(self.show_manage_students)
-        # layout.addWidget(manage_students_button)
+        self.first_input = QLineEdit(self)
+        self.first_input.setPlaceholderText('First Name')
+        layout.addWidget(self.first_input)
 
-        # manage_menu_button = QPushButton("Manage Menu")
-        # manage_menu_button.clicked.connect(self.show_manage_menu)
-        # layout.addWidget(manage_menu_button)
+        self.last_input = QLineEdit(self)
+        self.last_input.setPlaceholderText('Last Name')
+        layout.addWidget(self.last_input)
 
-        # view_transactions_button = QPushButton("View Transactions")
-        # view_transactions_button.clicked.connect(self.show_view_transactions)
-        # layout.addWidget(view_transactions_button)
+        self.password_input1 = QLineEdit(self)
+        self.password_input1.setPlaceholderText('Enter Password (9-24 characters)')
+        self.password_input1.setEchoMode(QLineEdit.Password)
+        layout.addWidget(self.password_input1)
+
+        self.password_input2 = QLineEdit(self)
+        self.password_input2.setPlaceholderText('Re-enter Password')
+        self.password_input2.setEchoMode(QLineEdit.Password)
+        layout.addWidget(self.password_input2)
+
+
+        self.error_display = QTextEdit(self)
+        self.error_display.setReadOnly(True)
+        self.error_display.setStyleSheet('color: red;')
+        layout.addWidget(self.error_display)
+
+
+        self.registration_button = QPushButton('Register', self)
+        self.registration_button.clicked.connect(self.handle_registration)
+        layout.addWidget(self.registration_button)
+
+
+
+      
 
         logout_button = QPushButton("Login?")
         logout_button.clicked.connect(self.switch_to_login)
         layout.addWidget(logout_button)
 
         self.setLayout(layout)
+
+    
+    def hash_password(self, password):
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def handle_registration(self):
+        self.error_display.setStyleSheet('color: red;')
+
+        entered_pid=self.pid_input.text()
+        entered_first = self.first_input.text()
+        entered_last = self.last_input.text()
+        entered_password1 = self.password_input1.text()
+        entered_password2 = self.password_input2.text()
+
+                
+        if entered_pid=='' or not entered_pid.isdigit() or len(entered_pid) != 9: # (check 9 digit num)
+            self.error_display.setText("Error: Enter valid PID.")
+
+        elif entered_first=='' or not entered_first.isalpha(): # check not empty, only letters (no num, whitespace)
+            self.error_display.setText('Error: Enter valid First Name')
+        elif entered_last=='' or not entered_last.isalpha(): # check not empty, only letters (no num, whitespace)
+            self.error_display.setText('Error: Enter valid Last Name')
+        elif entered_password1=='' or len(entered_password1) > 24 or len(entered_password1) < 8:  # checks empty, add other check for validity
+            self.error_display.setText('Error: Enter valid password; must be between 8 and 24 characters')
+        elif entered_password2 != entered_password1: # triggers if first valid but second doesn't match
+            self.error_display.setText('Error: Passwords do Not Match')
+        else: # means all valid
+            self.error_display.clear()
+
+            # # Check if PID in use
+            cursor.execute('SELECT * FROM Students S WHERE S.pid=%s', entered_pid)
+            result = cursor.fetchall()
+            try:
+                result[0][0] # if returns a result, it's being used
+                self.error_display.setText('Error: PID Already in Use')
+            except: # may be a bad idea as any error will allow it to continue, but I think the only error for this would be an index error meaning that there's no PID in use
+                self.error_display.clear()
+                new_user_details = (entered_pid, entered_first.title(), entered_last.title(), self.hash_password(entered_password1))
+                print(new_user_details)
+                cursor.execute('INSERT INTO Students (pid, first_name, last_name, password_hash) VALUES (%s, %s, %s, %s);', new_user_details)
+                db.commit()
+                self.error_display.setStyleSheet('color: green;')
+                self.error_display.setText('Registration Successful. Please return to the login page to sign in.')
+        
 
 
 
