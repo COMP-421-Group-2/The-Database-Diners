@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QTextEdit, QTableWidget, QTableWidgetItem,
-    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy
+    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy, QInputDialog, QHeaderView
 )
 from PyQt5.QtCore import Qt, QDate
 import pymysql
@@ -9,8 +9,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='rysch01',
-    password='SQLP4ssword1!',
+    user='root',
+    password='P3nnyTh3D0g',
     database='cafeteria',
 )
 cursor = db.cursor()
@@ -27,10 +27,9 @@ class LoginPage(QWidget):
     def initUI(self):
         layout = QVBoxLayout()
 
-        login_widget=QWidget()
-        login_widget.setFixedSize(400, 300) 
-        login_layout=QVBoxLayout(login_widget)
-        
+        login_widget = QWidget()
+        login_widget.setFixedSize(400, 300)
+        login_layout = QVBoxLayout(login_widget)
 
         self.title_label = QLabel('Login Page', self)
         self.title_label.setAlignment(Qt.AlignCenter)
@@ -50,7 +49,7 @@ class LoginPage(QWidget):
         self.error_display.setReadOnly(True)
         self.error_display.setStyleSheet('background: transparent; color: red; border:none;')
         self.error_display.setFixedHeight(30)
-        self.error_display.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
+        self.error_display.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         login_layout.addWidget(self.error_display)
 
         self.login_button = QPushButton('Login', self)
@@ -63,7 +62,12 @@ class LoginPage(QWidget):
 
         layout.addWidget(login_widget, alignment=Qt.AlignCenter)
         self.setLayout(layout)
-        
+
+    def clear_fields(self):
+        """Clear input fields and error messages."""
+        self.pid_input.clear()
+        self.password_input.clear()
+        self.error_display.clear()
 
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
@@ -74,7 +78,6 @@ class LoginPage(QWidget):
         self.error_display.clear()
 
         try:
-
             cursor.execute("SELECT role, password_hash FROM Students WHERE pid = %s", (pid,))
             result = cursor.fetchone()
 
@@ -91,6 +94,7 @@ class LoginPage(QWidget):
                 self.error_display.setText("Error: PID not found.")
         except Exception as e:
             self.error_display.setText(f"Error: {e}")
+
 
 
 class RegistrationView(QWidget):
@@ -468,21 +472,26 @@ class MainWindow(QWidget):
         self.show_login_page()
 
     def show_login_page(self):
+        self.login_page.clear_fields()  # Clear fields when showing the login page
         self.stacked_widget.setCurrentWidget(self.login_page)
 
     def show_registration_view(self):
+        self.login_page.clear_fields()  # Clear fields when leaving the login page
         self.stacked_widget.setCurrentWidget(self.registration_view)
 
     def show_admin_view(self):
+        self.login_page.clear_fields()  # Clear fields when leaving the login page
         self.stacked_widget.setCurrentWidget(self.admin_view)
 
     def show_manage_students(self):
+        self.manage_students_page.clear_fields()  # Clear fields before showing the page
         self.stacked_widget.setCurrentWidget(self.manage_students_page)
 
     def show_view_transactions(self):
         self.stacked_widget.setCurrentWidget(self.view_transactions_page)
 
     def show_student_view(self, pid):
+        self.login_page.clear_fields()  # Clear fields when leaving the login page
         self.student_view = StudentView(pid, self.show_login_page, self.backend)
         self.stacked_widget.addWidget(self.student_view)
         self.stacked_widget.setCurrentWidget(self.student_view)
@@ -585,6 +594,8 @@ class DatabaseBackend:
 
         return cursor.fetchall()
     
+from PyQt5.QtWidgets import QScrollArea
+
 class ManageStudentsPage(QWidget):
     def __init__(self, switch_to_admin):
         super().__init__()
@@ -598,10 +609,34 @@ class ManageStudentsPage(QWidget):
         title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 15px;")
         layout.addWidget(title)
 
-        pid_label = QLabel("Enter Student PID:")
+        # Scrollable area for the students table
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+
+        # Table to display students
+        self.students_table = QTableWidget()
+        self.students_table.setColumnCount(5)
+        self.students_table.setHorizontalHeaderLabels(
+            ["PID", "Name", "Last Purchase Date", "Meal Balance", "To-Go Boxes Remaining"]
+        )
+        self.students_table.setSizeAdjustPolicy(QTableWidget.AdjustToContents)  # Dynamically adjust column widths
+        self.students_table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Add vertical scrolling
+        self.students_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Add horizontal scrolling
+
+        # Embed the table in the scroll area
+        scroll_area.setWidget(self.students_table)
+        layout.addWidget(scroll_area)
+
+        # Populate the students table
+        self.load_students_data()
+
+        # Dropdown to select a student
+        pid_label = QLabel("Select a Student:")
         layout.addWidget(pid_label)
-        self.pid_input = QLineEdit()
-        layout.addWidget(self.pid_input)
+        self.student_dropdown = QComboBox()
+        self.student_dropdown.addItem("Select a student")  # Placeholder item
+        layout.addWidget(self.student_dropdown)
+        self.populate_student_dropdown()
 
         add_togo_box_button = QPushButton("Add To-Go Box")
         add_togo_box_button.clicked.connect(self.add_togo_box)
@@ -619,13 +654,81 @@ class ManageStudentsPage(QWidget):
         layout.addWidget(self.student_action_message)
 
         back_button = QPushButton("Back")
-        back_button.clicked.connect(self.switch_to_admin)
+        back_button.clicked.connect(self.back_to_admin)
         layout.addWidget(back_button)
 
         self.setLayout(layout)
 
+    def load_students_data(self):
+        """Fetch and populate the table with student data."""
+        query = """
+        SELECT 
+            S.pid, 
+            CONCAT(S.first_name, ' ', S.last_name) AS name, 
+            MAX(T.transaction_date) AS last_purchase_date, 
+            S.meal_balance, 
+            S.to_go_boxes_remaining
+        FROM Students S
+        LEFT JOIN Transactions T ON S.pid = T.pid
+        WHERE S.role = 'student'
+        GROUP BY S.pid
+        ORDER BY S.pid;
+        """
+        cursor.execute(query)
+        students = cursor.fetchall()
+
+        self.students_table.setRowCount(len(students))
+        self.students_table.horizontalHeader().setStretchLastSection(True)  # Stretch last column
+
+        for row_idx, student in enumerate(students):
+            for col_idx, value in enumerate(student):
+                self.students_table.setItem(row_idx, col_idx, QTableWidgetItem(str(value) if value is not None else "N/A"))
+
+        self.students_table.resizeColumnsToContents()  # Resize columns to fit content dynamically
+        self.students_table.resizeRowsToContents()  # Resize rows to fit content dynamically
+
+
+    def populate_student_dropdown(self):
+        """Fetch and populate the dropdown with students."""
+        query = """
+        SELECT pid, CONCAT(first_name, ' ', last_name) AS name
+        FROM Students
+        WHERE role = 'student'
+        ORDER BY pid;
+        """
+        cursor.execute(query)
+        students = cursor.fetchall()
+
+        # Populate dropdown
+        for student in students:
+            pid, name = student
+            self.student_dropdown.addItem(f"{pid} - {name}", pid)
+
+    def get_selected_pid(self):
+        """Extract the selected PID from the dropdown."""
+        index = self.student_dropdown.currentIndex()
+        if index <= 0:  # Placeholder or no selection
+            self.student_action_message.setText("Error: Please select a valid student.")
+            return None
+        return self.student_dropdown.itemData(index)
+
+    def clear_fields(self):
+        """Clear input fields and messages."""
+        self.student_dropdown.setCurrentIndex(0)  # Reset dropdown to placeholder
+        self.student_action_message.setText("")
+        self.students_table.clearContents()
+        self.load_students_data()
+
+    def back_to_admin(self):
+        """Handle navigation back to the admin view."""
+        self.clear_fields()  # Clear fields and reload data before leaving the page
+        self.switch_to_admin()
+
     def add_togo_box(self):
-        pid = self.pid_input.text()
+        pid = self.get_selected_pid()
+        if pid is None:
+            return
+
         try:
             cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining + 1 WHERE pid = %s", (pid,))
             if cursor.rowcount == 0:
@@ -633,34 +736,50 @@ class ManageStudentsPage(QWidget):
             else:
                 db.commit()
                 self.student_action_message.setText("To-Go Box added successfully!")
+                self.load_students_data()  # Refresh the table
         except Exception as e:
             self.student_action_message.setText(f"Error: {e}")
 
     def add_balance(self):
-        pid = self.pid_input.text()
+        pid = self.get_selected_pid()
+        if pid is None:
+            return
+
         try:
-            balance, ok = QInputDialog.getDouble(self, "Add Balance", "Enter Amount:", 0.0, 0, 1000, 2)
-            if ok:
-                cursor.execute("UPDATE Students SET meal_balance = meal_balance + %s WHERE pid = %s", (balance, pid))
+            # Open input dialog to get the balance amount
+            amount, ok = QInputDialog.getDouble(self, "Add Balance", "Enter Amount:", 0.0, 0, 10000, 2)
+            if ok:  # If user clicked "OK"
+                cursor.execute("UPDATE Students SET meal_balance = meal_balance + %s WHERE pid = %s", (amount, pid))
                 if cursor.rowcount == 0:
                     self.student_action_message.setText("Error: Student not found.")
                 else:
                     db.commit()
-                    self.student_action_message.setText(f"${balance:.2f} added to balance!")
+                    self.student_action_message.setText(f"${amount:.2f} added to the balance of PID {pid}.")
+                    self.load_students_data()  # Refresh the table
         except Exception as e:
             self.student_action_message.setText(f"Error: {e}")
 
     def delete_student(self):
-        pid = self.pid_input.text()
+        pid = self.get_selected_pid()
+        if pid is None:
+            return
+
         try:
+            # Delete transactions associated with the student
+            cursor.execute("DELETE FROM Transactions WHERE pid = %s", (pid,))
+            db.commit()  # Commit the transaction deletion first
+
+            # Delete the student
             cursor.execute("DELETE FROM Students WHERE pid = %s", (pid,))
             if cursor.rowcount == 0:
                 self.student_action_message.setText("Error: Student not found.")
             else:
                 db.commit()
-                self.student_action_message.setText("Student deleted successfully!")
+                self.student_action_message.setText(f"Student with PID {pid} deleted successfully.")
+                self.load_students_data()  # Refresh the table
         except Exception as e:
             self.student_action_message.setText(f"Error: {e}")
+
 
 
 class ViewTransactionsPage(QWidget):
