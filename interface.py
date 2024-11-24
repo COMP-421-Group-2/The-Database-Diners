@@ -17,10 +17,11 @@ cursor = connection.cursor()
 
 class LoginPage(QWidget):
     global cursor
-    def __init__(self, switch_to_admin, switch_to_student):
+    def __init__(self, switch_to_admin, switch_to_student, switch_to_register):
         super().__init__()
         self.switch_to_admin = switch_to_admin
         self.switch_to_student = switch_to_student
+        self.switch_to_register = switch_to_register
         self.initUI()
 
     def initUI(self):
@@ -43,6 +44,10 @@ class LoginPage(QWidget):
         self.login_button = QPushButton('Login', self)
         self.login_button.clicked.connect(self.handle_login)
         layout.addWidget(self.login_button)
+
+        self.switch_to_register_button = QPushButton('Register?', self)
+        self.switch_to_register_button.clicked.connect(self.switch_to_register)
+        layout.addWidget(self.switch_to_register_button)
 
         self.error_display = QTextEdit(self)
         self.error_display.setReadOnly(True)
@@ -101,6 +106,42 @@ class LoginPage(QWidget):
             self.error_display.setText(f"Error: {e}")
 
 
+class RegistrationView(QWidget):
+    global cursor
+    def __init__(self, switch_to_login, backend):
+        super().__init__()
+        self.switch_to_login = switch_to_login
+        self.backend = backend
+        self.initUI()
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        self.title_label = QLabel('Registration', self)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
+        layout.addWidget(self.title_label)
+
+        # # Buttons for admin functionalities
+        # manage_students_button = QPushButton("Manage Students")
+        # manage_students_button.clicked.connect(self.show_manage_students)
+        # layout.addWidget(manage_students_button)
+
+        # manage_menu_button = QPushButton("Manage Menu")
+        # manage_menu_button.clicked.connect(self.show_manage_menu)
+        # layout.addWidget(manage_menu_button)
+
+        # view_transactions_button = QPushButton("View Transactions")
+        # view_transactions_button.clicked.connect(self.show_view_transactions)
+        # layout.addWidget(view_transactions_button)
+
+        logout_button = QPushButton("Login?")
+        logout_button.clicked.connect(self.switch_to_login)
+        layout.addWidget(logout_button)
+
+        self.setLayout(layout)
+
+
+
 class AdminView(QWidget):
     global cursor
     def __init__(self, switch_to_login, backend):
@@ -108,6 +149,7 @@ class AdminView(QWidget):
         self.switch_to_login = switch_to_login
         self.backend = backend
         self.initUI()
+    
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -260,19 +302,12 @@ class StudentView(QWidget):
             'to_go_remaining': current_user[4],
             'role': current_user[6],
         }
-        # print(f'Account Balance: ${current_user["balance"]}')
-        # print(f'To-Go Boxes Remaining: {current_user["to_go_remaining"]}/2')
 
-        # print("Your Transaction History")
         cursor.execute('SELECT * FROM Transactions T WHERE T.pid=%s', current_user["pid"])
         result = cursor.fetchall()
-        print(result)
-    
-
 
         student_name = f'{current_user["first"]} {current_user["last"]}'
         pid = current_user['pid']
-
         account_balance = current_user['balance']
         togo_boxes = current_user['to_go_remaining']
 
@@ -285,44 +320,28 @@ class StudentView(QWidget):
         self.date_label = QLabel(f"Menu for {self.selected_date.toString('yyyy-MM-dd')}", self)
         layout.addWidget(self.date_label)
 
-        # Add calendar widget with today's date selected
         self.calendar = QCalendarWidget(self)
         self.calendar.setGridVisible(True)
         self.calendar.setSelectedDate(self.selected_date)  # Set today's date
         self.calendar.clicked.connect(self.select_date)
         layout.addWidget(self.calendar)
 
-        # Label to display the currently selected date
-
         self.menu=QTableWidget(self)
         self.menu.setColumnCount(4)
         self.menu.setHorizontalHeaderLabels(['Meal', 'Item', 'Price', 'Calories'])
         layout.addWidget(self.menu)
 
-        # Today's menu based on selected_date
         self.update_menu_based_on_date(self.selected_date)
 
-    
         self.payment_history_label = QLabel(f"Payment History", self)
         layout.addWidget(self.payment_history_label)
-
         self.payment_history=QTableWidget(self)
         self.payment_history.setColumnCount(5)
         self.payment_history.setHorizontalHeaderLabels(['Date', 'Meal', 'Item', 'Price', 'Type'])
         cursor.execute('SELECT * FROM Transactions T LEFT JOIN Menu M ON M.item_id = T.item_id WHERE T.pid = %s', pid)
         result=cursor.fetchall()
-        print(result[0])
-        print('here', result[0][4], result[0][7], result[0][6],  result[0][10], result[0][3])
-        # 4 (date)
-        # 7 (meal)
-        # 6 (item)
-        # 10 (price)
-        # 3 (type)
- 
-
 
         self.payment_history.setRowCount(len(result))
-        # # go through the each row and column data
         for ri, rdata in enumerate(result):
             self.payment_history.setItem(ri, 0, QTableWidgetItem(str(rdata[4])))
             self.payment_history.setItem(ri, 1, QTableWidgetItem(str(rdata[8])))
@@ -330,13 +349,13 @@ class StudentView(QWidget):
             self.payment_history.setItem(ri, 3, QTableWidgetItem(str(rdata[10])))
             self.payment_history.setItem(ri, 4, QTableWidgetItem(str(rdata[3])))
 
-
         layout.addWidget(self.payment_history)
 
 
         # Logout button
         self.logout_button = QPushButton('Logout', self)
         self.logout_button.clicked.connect(self.switch_to_login)
+        current_user=None
         layout.addWidget(self.logout_button)
 
         self.setLayout(layout)
@@ -409,7 +428,9 @@ class MainWindow(QWidget):
 
         self.stacked_widget = QStackedWidget()
 
-        self.login_page = LoginPage(self.show_admin_view, self.show_student_view)
+        self.login_page = LoginPage(self.show_admin_view, self.show_student_view, self.show_registration_view)
+        self.registration_view = RegistrationView(self.show_login_page, self.backend)
+
         self.admin_view = AdminView(self.show_login_page, self.backend)
         self.student_view = None  # Initialized dynamically
 
@@ -425,10 +446,16 @@ class MainWindow(QWidget):
     def show_login_page(self):
         self.stacked_widget.setCurrentWidget(self.login_page)
 
+    def show_registration_view(self):
+        self.registration_view = RegistrationView(self.show_login_page, self.backend)
+        self.stacked_widget.addWidget(self.registration_view)
+        self.stacked_widget.setCurrentWidget(self.registration_view)
+
     def show_admin_view(self):
         self.admin_view = AdminView(self.show_login_page, self.backend)
         self.stacked_widget.addWidget(self.admin_view)
         self.stacked_widget.setCurrentWidget(self.admin_view)
+        
     
     def show_student_view(self, pid):
         self.student_view = StudentView(pid, self.show_login_page, self.backend)
