@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QTextEdit, QTableWidget, QTableWidgetItem,
-    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy, QInputDialog, QHeaderView
+    QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy, QInputDialog, QHeaderView, QCheckBox,
+    QScrollArea
 )
 from PyQt5.QtCore import Qt, QDate
 import pymysql
@@ -10,10 +11,12 @@ import hashlib
 db = pymysql.connect(
     host='localhost',
     user='root',
-    password='P3nnyTh3D0g',
+    password='123456789',
     database='cafeteria',
 )
 cursor = db.cursor()
+cursor.execute("USE cafeteria")
+
 
 class LoginPage(QWidget):
     global cursor
@@ -210,49 +213,190 @@ class RegistrationView(QWidget):
 
 class AdminView(QWidget):
     global cursor
-    def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend):
+
+    def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend, admin_pid):
         super().__init__()
         self.switch_to_login = switch_to_login
         self.switch_to_manage_students = switch_to_manage_students
         self.switch_to_view_transactions = switch_to_view_transactions
         self.backend = backend
+        self.admin_pid = admin_pid
+        self.admin_name = self.backend.get_student_name(admin_pid)
         self.initUI()
 
     def initUI(self):
         layout = QVBoxLayout()
 
+        # Admin Header
+        admin_header = QHBoxLayout()
+        admin_name_label = QLabel(f"Name: {self.admin_name}")
+        admin_pid_label = QLabel(f"PID: {self.admin_pid}")
+        admin_header.addWidget(admin_name_label)
+        admin_header.addWidget(admin_pid_label)
+        layout.addLayout(admin_header)
 
-        # layout.addWidget(QLabel(f"Name: {student_name}"))
-        # layout.addWidget(QLabel(f"PID: {pid}"))
-
+        # Admin Title
         self.title_label = QLabel('Admin Dashboard', self)
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
-        
-        orderLayout = QVBoxLayout()
 
+        # Buttons for admin actions
         buttonWidget = QWidget()
-
         buttonLayout = QHBoxLayout(buttonWidget)
         manage_students_button = QPushButton("Manage Students")
         manage_students_button.clicked.connect(self.switch_to_manage_students)
-        manage_students_button.setFixedHeight(200) 
+        manage_students_button.setFixedHeight(200)
         buttonLayout.addWidget(manage_students_button)
 
         view_transactions_button = QPushButton("View Transactions")
         view_transactions_button.clicked.connect(self.switch_to_view_transactions)
-        view_transactions_button.setFixedHeight(200) 
+        view_transactions_button.setFixedHeight(200)
         buttonLayout.addWidget(view_transactions_button)
 
         logout_button = QPushButton("Logout")
         logout_button.clicked.connect(self.switch_to_login)
-        logout_button.setFixedHeight(200) 
+        logout_button.setFixedHeight(200)
         buttonLayout.addWidget(logout_button)
 
-        buttonWidget.setFixedHeight(300) 
+        buttonWidget.setFixedHeight(300)
         layout.addWidget(buttonWidget)
+
+        # Order Placement Section
+        self.order_section = self.create_order_section()
+        layout.addWidget(self.order_section)
+
         self.setLayout(layout)
+
+
+    def create_order_section(self):
+        """
+        Creates the section for placing an order.
+        """
+        order_widget = QWidget()
+        order_layout = QVBoxLayout(order_widget)
+
+        # Section title
+        order_title = QLabel("Place an Order")
+        order_title.setAlignment(Qt.AlignCenter)
+        order_title.setStyleSheet('font-size: 18px; font-weight: bold;')
+        order_layout.addWidget(order_title)
+
+        # Input fields
+        self.order_pid_input = QLineEdit()
+        self.order_pid_input.setPlaceholderText("Enter Student PID")
+        order_layout.addWidget(self.order_pid_input)
+
+        self.order_date_picker = QCalendarWidget()
+        self.order_date_picker.setGridVisible(True)
+        self.order_date_picker.clicked.connect(self.load_menu_for_order)
+        order_layout.addWidget(self.order_date_picker)
+
+        self.togo_box_checkbox = QCheckBox("Use To-Go Box")
+        order_layout.addWidget(self.togo_box_checkbox)
+
+        self.menu_table = QTableWidget()
+        self.menu_table.setColumnCount(5)
+        self.menu_table.setHorizontalHeaderLabels(['Item ID', 'Item Name', 'Price', 'Calories', 'Quantity'])
+        self.menu_table.horizontalHeader().setStretchLastSection(True)
+        order_layout.addWidget(self.menu_table)
+
+        # Place order button
+        place_order_button = QPushButton("Place Order")
+        place_order_button.clicked.connect(self.place_order)
+        order_layout.addWidget(place_order_button)
+
+        self.order_status_message = QLabel("")
+        order_layout.addWidget(self.order_status_message)
+
+        return order_widget
+
+
+    def load_menu_for_order(self):
+        """
+        Dynamically updates the menu table when a date is selected in the calendar.
+        """
+        selected_date = self.order_date_picker.selectedDate().toString('yyyy-MM-dd')
+        self.menu_table.setRowCount(0)  # Clear the table before loading new data
+
+        # Fetch menu items for the selected date
+        menu_items = self.backend.get_menu_for_date(selected_date, None)
+
+        if not menu_items:
+            self.order_status_message.setText(f"No menu available for {selected_date}.")
+            return
+
+        self.order_status_message.setText("")  # Clear any previous status message
+        self.menu_table.setRowCount(len(menu_items))
+
+        # Populate the table with menu items
+        for row_idx, item in enumerate(menu_items):
+            self.menu_table.setItem(row_idx, 0, QTableWidgetItem(str(item[0])))  # Item ID
+            self.menu_table.setItem(row_idx, 1, QTableWidgetItem(item[1]))  # Item Name
+            self.menu_table.setItem(row_idx, 2, QTableWidgetItem(f"${item[5]:.2f}"))  # Price
+            self.menu_table.setItem(row_idx, 3, QTableWidgetItem(str(item[2])))  # Calories
+            self.menu_table.setItem(row_idx, 4, QTableWidgetItem(str(item[6])))  # Quantity
+
+
+    def place_order(self):
+        """
+        Places an order for a student.
+        """
+        pid = self.order_pid_input.text()
+        selected_date = self.order_date_picker.selectedDate().toString('yyyy-MM-dd')
+        use_togo_box = self.togo_box_checkbox.isChecked()
+
+        # Validate PID
+        student_info = self.backend.get_user_info(pid)
+        if not student_info:
+            self.order_status_message.setText("Error: Invalid Student PID.")
+            return
+
+        # Prepare the order
+        total_cost = 0
+        item_quantities = []
+        for row_idx in range(self.menu_table.rowCount()):
+            item_id = self.menu_table.item(row_idx, 0).text()
+            quantity = int(self.menu_table.item(row_idx, 4).text())
+
+            if quantity > 0:
+                item_price = float(self.menu_table.item(row_idx, 2).text().replace('$', ''))
+                total_cost += item_price * quantity
+                item_quantities.append((item_id, quantity))
+
+        if not item_quantities:
+            self.order_status_message.setText("Error: No items selected.")
+            return
+
+        # Check balance and to-go boxes
+        if use_togo_box and student_info[4] <= 0:  # to_go_boxes_remaining
+            self.order_status_message.setText("Error: Student has no to-go boxes remaining.")
+            return
+        if student_info[3] < total_cost:  # meal_balance
+            self.order_status_message.setText("Error: Insufficient balance.")
+            return
+
+        try:
+            # Update student balance and to-go boxes
+            if use_togo_box:
+                cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining - 1 WHERE pid = %s", (pid,))
+            cursor.execute("UPDATE Students SET meal_balance = meal_balance - %s WHERE pid = %s", (total_cost, pid))
+
+            # Add transactions
+            for item_id, quantity in item_quantities:
+                for _ in range(quantity):
+                    cursor.execute(
+                        "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
+                        (pid, item_id, "meal swipe", selected_date)
+                    )
+            db.commit()
+
+            self.order_status_message.setStyleSheet("color: green;")
+            self.order_status_message.setText("Order placed successfully!")
+            self.load_menu_for_order()  # Refresh the menu table
+        except Exception as e:
+            self.order_status_message.setStyleSheet("color: red;")
+            self.order_status_message.setText(f"Error: {e}")
 
 
 
@@ -337,8 +481,8 @@ class StudentView(QWidget):
         menu_layout.addWidget(self.calendar)
 
         self.menu=QTableWidget(self)
-        self.menu.setColumnCount(4)
-        self.menu.setHorizontalHeaderLabels(['Meal', 'Item', 'Price', 'Calories'])
+        self.menu.setColumnCount(5)
+        self.menu.setHorizontalHeaderLabels(['Meal', 'Item', 'Price', 'Calories', 'Quantity'])
         menu_layout.addWidget(self.menu)
 
         self.update_menu_based_on_date(self.selected_date)
@@ -416,7 +560,7 @@ class StudentView(QWidget):
             self.menu.setItem(ri, 1, QTableWidgetItem(str(rdata[1])))
             self.menu.setItem(ri, 2, QTableWidgetItem(str(rdata[5])))
             self.menu.setItem(ri, 3, QTableWidgetItem(str(rdata[2])))
-
+            self.menu.setItem(ri, 4, QTableWidgetItem(str(rdata[6])))
 
 
     def show_manage_students_screen(self):
@@ -445,6 +589,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.backend = DatabaseBackend()
+        self.admin_pid = None  # Store the PID of the logged-in admin
         self.initUI()
 
     def initUI(self):
@@ -453,15 +598,14 @@ class MainWindow(QWidget):
 
         self.stacked_widget = QStackedWidget()
 
-        self.login_page = LoginPage(self.show_admin_view, self.show_student_view, self.show_registration_view)
+        self.login_page = LoginPage(self.handle_admin_login, self.show_student_view, self.show_registration_view)
         self.registration_view = RegistrationView(self.show_login_page, self.backend)
-        self.admin_view = AdminView(self.show_login_page, self.show_manage_students, self.show_view_transactions, self.backend)
         self.manage_students_page = ManageStudentsPage(self.show_admin_view)
         self.view_transactions_page = ViewTransactionsPage(self.show_admin_view, self.backend)
 
+        # Add views to the stacked widget
         self.stacked_widget.addWidget(self.login_page)
         self.stacked_widget.addWidget(self.registration_view)
-        self.stacked_widget.addWidget(self.admin_view)
         self.stacked_widget.addWidget(self.manage_students_page)
         self.stacked_widget.addWidget(self.view_transactions_page)
 
@@ -476,22 +620,34 @@ class MainWindow(QWidget):
         self.stacked_widget.setCurrentWidget(self.login_page)
 
     def show_registration_view(self):
-        self.login_page.clear_fields()  # Clear fields when leaving the login page
         self.stacked_widget.setCurrentWidget(self.registration_view)
 
+    def handle_admin_login(self):
+        # Retrieve the PID from the login page
+        admin_pid = self.login_page.pid_input.text()
+        self.admin_pid = admin_pid  # Save the PID for the logged-in admin
+        self.show_admin_view()
+
     def show_admin_view(self):
-        self.login_page.clear_fields()  # Clear fields when leaving the login page
+        # Ensure admin_pid is passed to the AdminView
+        self.admin_view = AdminView(
+            self.show_login_page,
+            self.show_manage_students,
+            self.show_view_transactions,
+            self.backend,
+            self.admin_pid
+        )
+        self.stacked_widget.addWidget(self.admin_view)
         self.stacked_widget.setCurrentWidget(self.admin_view)
 
     def show_manage_students(self):
-        self.manage_students_page.clear_fields()  # Clear fields before showing the page
+        self.manage_students_page.clear_fields()
         self.stacked_widget.setCurrentWidget(self.manage_students_page)
 
     def show_view_transactions(self):
         self.stacked_widget.setCurrentWidget(self.view_transactions_page)
 
     def show_student_view(self, pid):
-        self.login_page.clear_fields()  # Clear fields when leaving the login page
         self.student_view = StudentView(pid, self.show_login_page, self.backend)
         self.stacked_widget.addWidget(self.student_view)
         self.stacked_widget.setCurrentWidget(self.student_view)
@@ -525,12 +681,15 @@ class DatabaseBackend:
         result = cursor.fetchone()
         return result[0] if result else 0
     
-    def get_menu_for_date(self, date, meal_type):
-        query = """
-        SELECT * FROM Menu WHERE available_date = %s AND meal_type = %s AND quantity > 0
-        """
-        cursor.execute(query, (date, meal_type))
+    def get_menu_for_date(self, date, meal_type=None):
+        if meal_type:
+            query = "SELECT * FROM Menu WHERE available_date = %s AND meal_type = %s"
+            cursor.execute(query, (date, meal_type))
+        else:
+            query = "SELECT * FROM Menu WHERE available_date = %s"
+            cursor.execute(query, (date,))
         return cursor.fetchall()
+
 
     def process_transaction(self, pid, item_id, transaction_type, amount):
         cursor.execute("SELECT meal_balance, to_go_boxes FROM Students WHERE pid = %s", (pid,))
@@ -551,7 +710,7 @@ class DatabaseBackend:
             cursor.execute("UPDATE Students SET to_go_boxes = to_go_boxes + 1 WHERE pid = %s", (pid,))
 
         # Update menu quantity
-        cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
+        # cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
 
         # Insert into Transactions and DiningHistory
         cursor.execute(
@@ -570,7 +729,7 @@ class DatabaseBackend:
         return cursor.fetchall()
 
     def get_all_menu_items(self):
-        query = "SELECT item_id, item_name, quantity, price, meal_type FROM Menu"
+        query = "SELECT item_id, item_name, price, meal_type, quantity FROM Menu"
         cursor.execute(query)
         return cursor.fetchall()
 
@@ -594,7 +753,6 @@ class DatabaseBackend:
 
         return cursor.fetchall()
     
-from PyQt5.QtWidgets import QScrollArea
 
 class ManageStudentsPage(QWidget):
     def __init__(self, switch_to_admin):
