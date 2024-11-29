@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy, QInputDialog, QHeaderView, QCheckBox,
     QScrollArea
 )
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtCore import Qt, QDate
 import pymysql
 import sys
@@ -228,12 +229,18 @@ class AdminView(QWidget):
         layout = QVBoxLayout()
 
         # Admin Header
-        admin_header = QHBoxLayout()
+        admin_header = QVBoxLayout()  # Use a vertical layout for Name and PID
         admin_name_label = QLabel(f"Name: {self.admin_name}")
+        admin_name_label.setAlignment(Qt.AlignLeft)
         admin_pid_label = QLabel(f"PID: {self.admin_pid}")
+        admin_pid_label.setAlignment(Qt.AlignLeft)
+        
         admin_header.addWidget(admin_name_label)
         admin_header.addWidget(admin_pid_label)
-        layout.addLayout(admin_header)
+
+        header_widget = QWidget()
+        header_widget.setLayout(admin_header)
+        layout.addWidget(header_widget)
 
         # Admin Title
         self.title_label = QLabel('Admin Dashboard', self)
@@ -241,25 +248,29 @@ class AdminView(QWidget):
         self.title_label.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(self.title_label)
 
-        # Buttons for admin actions
+        # Buttons for admin actions in a row
         buttonWidget = QWidget()
-        buttonLayout = QHBoxLayout(buttonWidget)
+        buttonLayout = QHBoxLayout(buttonWidget)  # Use horizontal layout for row arrangement
+
         manage_students_button = QPushButton("Manage Students")
+        manage_students_button.setFixedHeight(50)  # Reduce height
+        manage_students_button.setFixedWidth(200)  # Reduce width
         manage_students_button.clicked.connect(self.switch_to_manage_students)
-        manage_students_button.setFixedHeight(200)
         buttonLayout.addWidget(manage_students_button)
 
         view_transactions_button = QPushButton("View Transactions")
+        view_transactions_button.setFixedHeight(50)  # Reduce height
+        view_transactions_button.setFixedWidth(200)  # Reduce width
         view_transactions_button.clicked.connect(self.switch_to_view_transactions)
-        view_transactions_button.setFixedHeight(200)
         buttonLayout.addWidget(view_transactions_button)
 
         logout_button = QPushButton("Logout")
+        logout_button.setFixedHeight(50)  # Reduce height
+        logout_button.setFixedWidth(200)  # Reduce width
         logout_button.clicked.connect(self.switch_to_login)
-        logout_button.setFixedHeight(200)
         buttonLayout.addWidget(logout_button)
 
-        buttonWidget.setFixedHeight(300)
+        buttonLayout.setAlignment(Qt.AlignCenter)  # Center the row of buttons
         layout.addWidget(buttonWidget)
 
         # Order Placement Section
@@ -267,6 +278,7 @@ class AdminView(QWidget):
         layout.addWidget(self.order_section)
 
         self.setLayout(layout)
+
 
 
     def create_order_section(self):
@@ -282,27 +294,29 @@ class AdminView(QWidget):
         order_title.setStyleSheet('font-size: 18px; font-weight: bold;')
         order_layout.addWidget(order_title)
 
-        # Input fields
-        self.order_pid_input = QLineEdit()
-        self.order_pid_input.setPlaceholderText("Enter Student PID")
-        order_layout.addWidget(self.order_pid_input)
+        # Dropdown to select a student
+        self.student_dropdown = QComboBox()
+        self.populate_student_dropdown()
+        order_layout.addWidget(self.student_dropdown)
 
         self.order_date_picker = QCalendarWidget()
         self.order_date_picker.setGridVisible(True)
         self.order_date_picker.clicked.connect(self.load_menu_for_order)
         order_layout.addWidget(self.order_date_picker)
 
-        self.togo_box_checkbox = QCheckBox("Use To-Go Box")
-        order_layout.addWidget(self.togo_box_checkbox)
+        # Add to-go box option
+        self.togo_checkbox = QCheckBox("Use To-Go Box")
+        order_layout.addWidget(self.togo_checkbox)
 
         self.menu_table = QTableWidget()
-        self.menu_table.setColumnCount(5)
-        self.menu_table.setHorizontalHeaderLabels(['Item ID', 'Item Name', 'Price', 'Calories', 'Quantity'])
-        self.menu_table.horizontalHeader().setStretchLastSection(True)
+        self.menu_table.setColumnCount(6)
+        self.menu_table.setHorizontalHeaderLabels(['Item ID', 'Item Name', 'Price', 'Calories', 'Quantity Available', 'Quantity to Order'])
         order_layout.addWidget(self.menu_table)
 
         # Place order button
         place_order_button = QPushButton("Place Order")
+        place_order_button.setFixedHeight(50)  # Reduce height
+        place_order_button.setFixedWidth(200)  # Reduce width
         place_order_button.clicked.connect(self.place_order)
         order_layout.addWidget(place_order_button)
 
@@ -312,6 +326,12 @@ class AdminView(QWidget):
         return order_widget
 
 
+    def populate_student_dropdown(self):
+        """Populate dropdown with all students."""
+        students = self.backend.get_all_students()
+        for student in students:
+            self.student_dropdown.addItem(f"{student[0]} - {student[1]}", student[0])
+
     def load_menu_for_order(self):
         """
         Dynamically updates the menu table when a date is selected in the calendar.
@@ -320,7 +340,7 @@ class AdminView(QWidget):
         self.menu_table.setRowCount(0)  # Clear the table before loading new data
 
         # Fetch menu items for the selected date
-        menu_items = self.backend.get_menu_for_date(selected_date, None)
+        menu_items = self.backend.get_menu_for_date(selected_date)
 
         if not menu_items:
             self.order_status_message.setText(f"No menu available for {selected_date}.")
@@ -335,62 +355,88 @@ class AdminView(QWidget):
             self.menu_table.setItem(row_idx, 1, QTableWidgetItem(item[1]))  # Item Name
             self.menu_table.setItem(row_idx, 2, QTableWidgetItem(f"${item[5]:.2f}"))  # Price
             self.menu_table.setItem(row_idx, 3, QTableWidgetItem(str(item[2])))  # Calories
-            self.menu_table.setItem(row_idx, 4, QTableWidgetItem(str(item[6])))  # Quantity
-
+            self.menu_table.setItem(row_idx, 4, QTableWidgetItem(str(item[6])))  # Quantity Available
+            quantity_input = QLineEdit()
+            quantity_input.setValidator(QIntValidator(0, item[6]))  # Limit quantity to available stock
+            self.menu_table.setCellWidget(row_idx, 5, quantity_input)  # Quantity to Order input
 
     def place_order(self):
         """
-        Places an order for a student.
+        Places an order for the selected student.
         """
-        pid = self.order_pid_input.text()
-        selected_date = self.order_date_picker.selectedDate().toString('yyyy-MM-dd')
-        use_togo_box = self.togo_box_checkbox.isChecked()
-
-        # Validate PID
-        student_info = self.backend.get_user_info(pid)
-        if not student_info:
-            self.order_status_message.setText("Error: Invalid Student PID.")
+        selected_student = self.student_dropdown.currentData()
+        if not selected_student:
+            self.order_status_message.setText("Error: Please select a student.")
             return
 
-        # Prepare the order
+        # Get student info
+        student_info = self.backend.get_user_info(selected_student)
+        if not student_info:
+            self.order_status_message.setText("Error: Invalid Student.")
+            return
+
+        # Check if the student wants to use a to-go box
+        use_togo_box = self.togo_checkbox.isChecked()
+        if use_togo_box and student_info[4] <= 0:  # Check to_go_boxes_remaining
+            self.order_status_message.setText("Error: No to-go boxes remaining.")
+            return
+
         total_cost = 0
         item_quantities = []
         for row_idx in range(self.menu_table.rowCount()):
             item_id = self.menu_table.item(row_idx, 0).text()
-            quantity = int(self.menu_table.item(row_idx, 4).text())
+            item_name = self.menu_table.item(row_idx, 1).text()
+            price = float(self.menu_table.item(row_idx, 2).text().replace('$', ''))
+            available_quantity = int(self.menu_table.item(row_idx, 4).text())
 
-            if quantity > 0:
-                item_price = float(self.menu_table.item(row_idx, 2).text().replace('$', ''))
-                total_cost += item_price * quantity
-                item_quantities.append((item_id, quantity))
+            quantity_input = self.menu_table.cellWidget(row_idx, 5)
+            if quantity_input and quantity_input.text():
+                quantity = int(quantity_input.text())
 
-        if not item_quantities:
+                if quantity > 0:
+                    if quantity > available_quantity:
+                        self.order_status_message.setText(f"Error: Not enough {item_name} available.")
+                        return
+                    total_cost += price * quantity
+                    item_quantities.append((item_id, quantity))
+
+        if total_cost == 0:
             self.order_status_message.setText("Error: No items selected.")
             return
 
-        # Check balance and to-go boxes
-        if use_togo_box and student_info[4] <= 0:  # to_go_boxes_remaining
-            self.order_status_message.setText("Error: Student has no to-go boxes remaining.")
-            return
-        if student_info[3] < total_cost:  # meal_balance
+        # Check if the student has enough balance
+        if student_info[3] < total_cost:
             self.order_status_message.setText("Error: Insufficient balance.")
             return
 
         try:
-            # Update student balance and to-go boxes
-            if use_togo_box:
-                cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining - 1 WHERE pid = %s", (pid,))
-            cursor.execute("UPDATE Students SET meal_balance = meal_balance - %s WHERE pid = %s", (total_cost, pid))
+            # Update student balance
+            cursor.execute("UPDATE Students SET meal_balance = meal_balance - %s WHERE pid = %s", (total_cost, selected_student))
 
-            # Add transactions
+            # Update to-go boxes if the option is selected
+            if use_togo_box:
+                cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining - 1 WHERE pid = %s", (selected_student,))
+
+            # Update menu item quantities
+            for item_id, quantity in item_quantities:
+                cursor.execute("UPDATE Menu SET quantity = quantity - %s WHERE item_id = %s", (quantity, item_id))
+
+            # Insert transactions
             for item_id, quantity in item_quantities:
                 for _ in range(quantity):
                     cursor.execute(
                         "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                        (pid, item_id, "meal swipe", selected_date)
+                        (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
                     )
-            db.commit()
+            
+            # Insert a separate transaction for the to-go box if used
+            if use_togo_box:
+                cursor.execute(
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
+                    (selected_student, "to-go box checkout", QDate.currentDate().toString('yyyy-MM-dd'))
+                )
 
+            db.commit()
             self.order_status_message.setStyleSheet("color: green;")
             self.order_status_message.setText("Order placed successfully!")
             self.load_menu_for_order()  # Refresh the menu table
@@ -797,14 +843,20 @@ class ManageStudentsPage(QWidget):
         self.populate_student_dropdown()
 
         add_togo_box_button = QPushButton("Add To-Go Box")
+        add_togo_box_button.setFixedHeight(50)  # Reduce height
+        add_togo_box_button.setFixedWidth(200)  # Reduce width
         add_togo_box_button.clicked.connect(self.add_togo_box)
         layout.addWidget(add_togo_box_button)
 
         add_balance_button = QPushButton("Add Meal Balance")
+        add_balance_button.setFixedHeight(50)  # Reduce height
+        add_balance_button.setFixedWidth(200)  # Reduce width
         add_balance_button.clicked.connect(self.add_balance)
         layout.addWidget(add_balance_button)
 
         delete_student_button = QPushButton("Delete Student")
+        delete_student_button.setFixedHeight(50)  # Reduce height
+        delete_student_button.setFixedWidth(200)  # Reduce width
         delete_student_button.clicked.connect(self.delete_student)
         layout.addWidget(delete_student_button)
 
@@ -812,6 +864,8 @@ class ManageStudentsPage(QWidget):
         layout.addWidget(self.student_action_message)
 
         back_button = QPushButton("Back")
+        back_button.setFixedHeight(50)  # Reduce height
+        back_button.setFixedWidth(200)  # Reduce width
         back_button.clicked.connect(self.back_to_admin)
         layout.addWidget(back_button)
 
