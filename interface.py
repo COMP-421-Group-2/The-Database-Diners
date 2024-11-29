@@ -215,13 +215,14 @@ class RegistrationView(QWidget):
 class AdminView(QWidget):
     global cursor
 
-    def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend, admin_pid):
+    def __init__(self, switch_to_login, switch_to_manage_students, switch_to_view_transactions, backend, admin_pid, view_transactions_page):
         super().__init__()
         self.switch_to_login = switch_to_login
         self.switch_to_manage_students = switch_to_manage_students
         self.switch_to_view_transactions = switch_to_view_transactions
         self.backend = backend
         self.admin_pid = admin_pid
+        self.view_transactions_page = view_transactions_page
         self.admin_name = self.backend.get_student_name(admin_pid)
         self.initUI()
 
@@ -310,7 +311,7 @@ class AdminView(QWidget):
 
         self.menu_table = QTableWidget()
         self.menu_table.setColumnCount(6)
-        self.menu_table.setHorizontalHeaderLabels(['Item ID', 'Item Name', 'Price', 'Calories', 'Quantity Available', 'Quantity to Order'])
+        self.menu_table.setHorizontalHeaderLabels(['Item ID', 'Item Name', 'Price', 'Calories', 'Quantity Left', 'Order'])
         order_layout.addWidget(self.menu_table)
 
         # Place order button
@@ -324,6 +325,7 @@ class AdminView(QWidget):
         order_layout.addWidget(self.order_status_message)
 
         return order_widget
+
 
 
     def populate_student_dropdown(self):
@@ -355,10 +357,14 @@ class AdminView(QWidget):
             self.menu_table.setItem(row_idx, 1, QTableWidgetItem(item[1]))  # Item Name
             self.menu_table.setItem(row_idx, 2, QTableWidgetItem(f"${item[5]:.2f}"))  # Price
             self.menu_table.setItem(row_idx, 3, QTableWidgetItem(str(item[2])))  # Calories
-            self.menu_table.setItem(row_idx, 4, QTableWidgetItem(str(item[6])))  # Quantity Available
-            quantity_input = QLineEdit()
-            quantity_input.setValidator(QIntValidator(0, item[6]))  # Limit quantity to available stock
-            self.menu_table.setCellWidget(row_idx, 5, quantity_input)  # Quantity to Order input
+            self.menu_table.setItem(row_idx, 4, QTableWidgetItem(str(item[6])))  # Quantity Left
+
+            # Add a checkbox for ordering
+            checkbox_widget = QCheckBox()
+            checkbox_widget.setStyleSheet("margin-left:50%; margin-right:50%;")  # Center checkbox
+            self.menu_table.setCellWidget(row_idx, 5, checkbox_widget)
+
+
 
     def place_order(self):
         """
@@ -382,23 +388,21 @@ class AdminView(QWidget):
             return
 
         total_cost = 0
-        item_quantities = []
+        ordered_items = []  # List to hold ordered items
         for row_idx in range(self.menu_table.rowCount()):
             item_id = self.menu_table.item(row_idx, 0).text()
             item_name = self.menu_table.item(row_idx, 1).text()
             price = float(self.menu_table.item(row_idx, 2).text().replace('$', ''))
             available_quantity = int(self.menu_table.item(row_idx, 4).text())
+            checkbox_widget = self.menu_table.cellWidget(row_idx, 5)
 
-            quantity_input = self.menu_table.cellWidget(row_idx, 5)
-            if quantity_input and quantity_input.text():
-                quantity = int(quantity_input.text())
+            if checkbox_widget and checkbox_widget.isChecked():
+                if available_quantity <= 0:
+                    self.order_status_message.setText(f"Error: {item_name} is out of stock.")
+                    return
 
-                if quantity > 0:
-                    if quantity > available_quantity:
-                        self.order_status_message.setText(f"Error: Not enough {item_name} available.")
-                        return
-                    total_cost += price * quantity
-                    item_quantities.append((item_id, quantity))
+                total_cost += price
+                ordered_items.append(item_id)
 
         if total_cost == 0:
             self.order_status_message.setText("Error: No items selected.")
@@ -417,18 +421,101 @@ class AdminView(QWidget):
             if use_togo_box:
                 cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining - 1 WHERE pid = %s", (selected_student,))
 
-            # Update menu item quantities
-            for item_id, quantity in item_quantities:
-                cursor.execute("UPDATE Menu SET quantity = quantity - %s WHERE item_id = %s", (quantity, item_id))
+            # Update menu item quantities and insert transactions
+            for item_id in ordered_items:
+                cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
+                cursor.execute(
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
+                    (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
+                )
 
-            # Insert transactions
-            for item_id, quantity in item_quantities:
-                for _ in range(quantity):
-                    cursor.execute(
-                        "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                        (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
-                    )
-            
+            # Insert a separate transaction for the to-go box if used
+            if use_togo_box:
+                cursor.execute(
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
+                    (selected_student, "to-go box checkout", QDate.currentDate().toString('yyyy-MM-dd'))
+                )
+
+            db.commit()
+            self.order_status_message.setStyleSheet("color: green;")
+            self.order_status_message.setText("Order placed successfully!")
+            self.load_menu_for_order()  # Refresh the menu table
+
+            # Refresh the transaction table
+            self.view_transactions_page.reload_transactions()
+        except Exception as e:
+            self.order_status_message.setStyleSheet("color: red;")
+            self.order_status_message.setText(f"Error: {e}")
+
+
+    def place_order(self):
+        """
+        Places an order for the selected student.
+        """
+        selected_student = self.student_dropdown.currentData()
+        if not selected_student:
+            self.order_status_message.setText("Error: Please select a student.")
+            return
+
+        # Get student info
+        student_info = self.backend.get_user_info(selected_student)
+        if not student_info:
+            self.order_status_message.setText("Error: Invalid Student.")
+            return
+
+        # Check if the student wants to use a to-go box
+        use_togo_box = self.togo_checkbox.isChecked()
+        if use_togo_box and student_info[4] <= 0:  # Check to_go_boxes_remaining
+            self.order_status_message.setText("Error: No to-go boxes remaining.")
+            return
+
+        total_cost = 0
+        ordered_items = []  # List to hold ordered items
+
+        # Iterate through menu items to identify selected items
+        for row_idx in range(self.menu_table.rowCount()):
+            item_id = self.menu_table.item(row_idx, 0).text()
+            item_name = self.menu_table.item(row_idx, 1).text()
+            price = float(self.menu_table.item(row_idx, 2).text().replace('$', ''))
+            available_quantity = int(self.menu_table.item(row_idx, 4).text())  # Quantity Left
+            checkbox_widget = self.menu_table.cellWidget(row_idx, 5)
+
+            # Check if the item is selected using the checkbox
+            if checkbox_widget and checkbox_widget.isChecked():
+                if available_quantity <= 0:
+                    self.order_status_message.setText(f"Error: {item_name} is out of stock.")
+                    return
+
+                # Add to total cost and record the item
+                total_cost += price
+                ordered_items.append(item_id)
+
+        # Validate if any items were selected
+        if not ordered_items:
+            self.order_status_message.setText("Error: No items selected.")
+            return
+
+        # Check if the student has enough balance
+        if student_info[3] < total_cost:
+            self.order_status_message.setText("Error: Insufficient balance.")
+            return
+
+        try:
+            # Update student balance
+            cursor.execute("UPDATE Students SET meal_balance = meal_balance - %s WHERE pid = %s", (total_cost, selected_student))
+
+            # Update to-go boxes if the option is selected
+            if use_togo_box:
+                cursor.execute("UPDATE Students SET to_go_boxes_remaining = to_go_boxes_remaining - 1 WHERE pid = %s", (selected_student,))
+
+            # Update menu item quantities and insert transactions
+            for item_id in ordered_items:
+                cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
+                cursor.execute(
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
+                    (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
+                )
+
             # Insert a separate transaction for the to-go box if used
             if use_togo_box:
                 cursor.execute(
@@ -443,6 +530,7 @@ class AdminView(QWidget):
         except Exception as e:
             self.order_status_message.setStyleSheet("color: red;")
             self.order_status_message.setText(f"Error: {e}")
+
 
 
 
@@ -681,10 +769,12 @@ class MainWindow(QWidget):
             self.show_manage_students,
             self.show_view_transactions,
             self.backend,
-            self.admin_pid
+            self.admin_pid,
+            self.view_transactions_page  # Pass this instance
         )
         self.stacked_widget.addWidget(self.admin_view)
         self.stacked_widget.setCurrentWidget(self.admin_view)
+
 
     def show_manage_students(self):
         self.manage_students_page.clear_fields()
@@ -1001,13 +1091,6 @@ class ViewTransactionsPage(QWidget):
         self.backend = backend
         self.initUI()
 
-class ViewTransactionsPage(QWidget):
-    def __init__(self, switch_to_admin, backend):
-        super().__init__()
-        self.switch_to_admin = switch_to_admin
-        self.backend = backend
-        self.initUI()
-
     def initUI(self):
         layout = QVBoxLayout()
 
@@ -1088,6 +1171,18 @@ class ViewTransactionsPage(QWidget):
 
         # Load transactions for the selected student
         self.load_transactions(pid)
+
+
+    def reload_transactions(self):
+        """
+        Reload the transactions for the currently selected student or all students.
+        """
+        current_selection = self.student_dropdown.currentText()
+        if current_selection == 'All Students' or not current_selection.strip():
+            self.load_transactions()
+        else:
+            pid = current_selection.split(" - ")[0]
+            self.load_transactions(pid)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
