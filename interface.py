@@ -11,8 +11,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='root',
-    password='123456789',
+    user='rysch01',
+    password='SQLP4ssword1!',
     database='cafeteria',
 )
 cursor = db.cursor()
@@ -171,6 +171,8 @@ class RegistrationView(QWidget):
         return hashlib.sha256(password.encode()).hexdigest()
 
     def handle_registration(self):
+        
+        
         self.error_display.setStyleSheet('color: red; border:none;background: transparent;')
 
         entered_pid=self.pid_input.text()
@@ -204,7 +206,8 @@ class RegistrationView(QWidget):
                 self.error_display.clear()
                 new_user_details = (entered_pid, entered_first.title(), entered_last.title(), self.hash_password(entered_password1))
                 print(new_user_details)
-                cursor.execute('INSERT INTO Students (pid, first_name, last_name, password_hash) VALUES (%s, %s, %s, %s);', new_user_details)
+                cursor.callproc('register_student', new_user_details)
+                print('used procedure here')
                 db.commit()
                 self.error_display.setStyleSheet('background: transparent; color: green; border:none;')
                 self.error_display.setText('Registration Successful. Please sign in.')
@@ -426,14 +429,14 @@ class AdminView(QWidget):
                 cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                    (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, item_id, "dine-in", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             # Insert a separate transaction for the to-go box if used
             if use_togo_box:
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
-                    (selected_student, "to-go box checkout", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             db.commit()
@@ -513,14 +516,14 @@ class AdminView(QWidget):
                 cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                    (selected_student, item_id, "meal swipe", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, item_id, "dine-in", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             # Insert a separate transaction for the to-go box if used
             if use_togo_box:
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
-                    (selected_student, "to-go box checkout", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             db.commit()
@@ -637,7 +640,11 @@ class StudentView(QWidget):
         for ri, rdata in enumerate(result):
             self.payment_history.setItem(ri, 0, QTableWidgetItem(str(rdata[4])))
             self.payment_history.setItem(ri, 1, QTableWidgetItem(str(rdata[8])))
-            self.payment_history.setItem(ri, 2, QTableWidgetItem(str(rdata[6])))
+
+            temp=str(rdata[6])
+            print(temp)
+            temp= QTableWidgetItem(temp)
+            self.payment_history.setItem(ri, 2,temp)
             self.payment_history.setItem(ri, 3, QTableWidgetItem(str(rdata[10])))
             self.payment_history.setItem(ri, 4, QTableWidgetItem(str(rdata[3])))
 
@@ -681,15 +688,17 @@ class StudentView(QWidget):
         self.menu.setRowCount(0)
         cursor.execute('SELECT * FROM Menu M WHERE available_date=%s', date.toString('yyyy-MM-dd'))
         result = cursor.fetchall()
-
+        print(result)
 
         meal = {'breakfast': 0, 'lunch': 1, 'dinner': 2}
         result = sorted(result, key=lambda x: meal.get(x[3], 3))  # Default to 3 for unknown types
 
-
+        # 'Date', 'Meal', 'Item', 'Price', 'Type'
         self.menu.setRowCount(len(result))
         # go through the each row and column data
         for ri, rdata in enumerate(result):
+            print(rdata)
+            
             self.menu.setItem(ri, 0, QTableWidgetItem(str(rdata[3])))
             self.menu.setItem(ri, 1, QTableWidgetItem(str(rdata[1])))
             self.menu.setItem(ri, 2, QTableWidgetItem(str(rdata[5])))
@@ -834,15 +843,15 @@ class DatabaseBackend:
             raise Exception("Student not found.")
         balance, to_go_boxes = student
 
-        if transaction_type == "meal swipe" and balance < amount:
+        if transaction_type == "dine-in" and balance < amount:
             raise Exception("Insufficient balance.")
-        if transaction_type == "to-go box checkout" and to_go_boxes >= 3:
+        if transaction_type == "to-go" and to_go_boxes >= 3:
             raise Exception("To-go box limit exceeded.")
 
         # Update balance and boxes
-        if transaction_type == "meal swipe":
+        if transaction_type == "dine-in":
             cursor.execute("UPDATE Students SET meal_balance = meal_balance - %s WHERE pid = %s", (amount, pid))
-        elif transaction_type == "to-go box checkout":
+        elif transaction_type == "to-go":
             cursor.execute("UPDATE Students SET to_go_boxes = to_go_boxes + 1 WHERE pid = %s", (pid,))
 
         # Update menu quantity
