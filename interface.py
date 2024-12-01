@@ -1,3 +1,4 @@
+
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QTextEdit, QTableWidget, QTableWidgetItem,
     QStackedWidget, QHBoxLayout,QCalendarWidget, QComboBox, QSpacerItem, QSizePolicy, QInputDialog, QHeaderView, QCheckBox,
@@ -11,8 +12,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='rysch01',
-    password='SQLP4ssword1!',
+    user='root',
+    password='',
     database='cafeteria',
 )
 cursor = db.cursor()

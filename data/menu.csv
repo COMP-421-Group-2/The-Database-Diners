@@ -1,101 +1,103 @@
 item_id,item_name,calories_per_serving,meal_type,available_date,price,quantity
-1,Oatmeal,150,breakfast,2024-11-12,5.0,100
-2,Banana Pancakes,200,breakfast,2024-11-12,11.0,200
-3,Grilled Chicken Sandwich,600,dinner,2024-11-12,8.0,100
-4,Spaghetti Bolognese,450,dinner,2024-11-12,6.0,200
-5,Pasta Primavera,450,lunch,2024-11-12,11.0,100
-6,Chicken Caesar Wrap,300,lunch,2024-11-12,8.0,150
-7,Bagel with Cream Cheese,250,breakfast,2024-11-13,5.5,100
-8,Fruit Parfait,200,breakfast,2024-11-13,6.0,100
-9,Vegan Burrito Bowl,500,lunch,2024-11-13,9.0,100
-10,Mediterranean Veggie Wrap,400,lunch,2024-11-13,7.5,100
-11,Shrimp Scampi,600,dinner,2024-11-13,12.0,100
-12,BBQ Pulled Pork Sandwich,700,dinner,2024-11-13,9.0,100
-13,Avocado Toast,300,breakfast,2024-11-14,6.5,100
-14,Greek Yogurt Parfait,250,breakfast,2024-11-14,6.0,100
-15,Chicken Alfredo Pasta,550,lunch,2024-11-14,10.0,100
-16,Turkey BLT Sandwich,450,lunch,2024-11-14,9.0,100
-17,Beef Tacos,600,dinner,2024-11-14,10.0,100
-18,Vegetable Stir Fry,400,dinner,2024-11-14,8.5,150
-19,Classic Waffles,400,breakfast,2024-11-15,7.0,150
-20,Banana Nut Bread,350,breakfast,2024-11-15,5.0,100
-21,Teriyaki Chicken Bowl,500,lunch,2024-11-15,10.0,100
-22,Vegetable Curry,400,lunch,2024-11-15,9.0,150
-23,Cheese Pizza Slice,300,dinner,2024-11-15,8.5,150
-24,Lentil Stew,300,dinner,2024-11-15,8.0,100
-25,Chocolate Croissant,300,breakfast,2024-11-16,5.5,100
-26,Raspberry Oat Muffin,200,breakfast,2024-11-16,5.0,100
-27,Caesar Salad,300,lunch,2024-11-16,7.5,150
-28,Spinach Mushroom Quiche,350,lunch,2024-11-16,9.0,50
-29,Ham and Cheese Croissant,400,dinner,2024-11-16,7.5,100
-30,Eggplant Parmesan,500,dinner,2024-11-16,10.5,100
-31,Scrambled Eggs and Bacon,500,breakfast,2024-11-17,8.0,150
-32,Mediterranean Veggie Wrap,400,breakfast,2024-11-17,6.0,100
-33,Chicken Caesar Wrap,300,lunch,2024-11-17,8.0,150
-34,Ratatouille,300,lunch,2024-11-17,7.5,100
-35,BBQ Chicken Salad,400,dinner,2024-11-17,9.0,100
-36,Mango Salsa Salmon,550,dinner,2024-11-17,15.0,50
-37,Greek Yogurt Parfait,250,breakfast,2024-11-18,6.0,150
-38,Chocolate Chip Muffin,350,breakfast,2024-11-18,5.0,100
-39,Vegetable Soup,200,lunch,2024-11-18,7.0,150
-40,Turkey BLT Sandwich,450,lunch,2024-11-18,9.0,100
-41,Chicken Noodle Soup,300,dinner,2024-11-18,8.0,150
-42,Lentil Stew,300,dinner,2024-11-18,8.5,100
-43,Avocado Toast,300,breakfast,2024-11-19,6.5,100
-44,Fruit Parfait,200,breakfast,2024-11-19,6.0,100
-45,Caesar Salad,300,lunch,2024-11-19,7.5,150
-46,Mediterranean Veggie Wrap,400,lunch,2024-11-19,7.5,100
-47,Mango Salsa Salmon,550,dinner,2024-11-19,15.0,50
-48,Eggplant Parmesan,500,dinner,2024-11-19,10.5,100
-49,Scrambled Eggs and Bacon,500,breakfast,2024-11-20,8.0,150
-50,Banana Nut Bread,350,breakfast,2024-11-20,5.0,100
-51,Vegan Burrito Bowl,500,lunch,2024-11-20,9.0,100
-52,Lentil Stew,300,lunch,2024-11-20,8.5,100
-53,Beef Tacos,600,dinner,2024-11-20,10.0,100
-54,BBQ Chicken Salad,400,dinner,2024-11-20,9.0,100
-55,Classic Waffles,400,breakfast,2024-11-21,7.0,150
-56,Chocolate Chip Muffin,350,breakfast,2024-11-21,5.0,100
-57,Vegetable Stir Fry,400,lunch,2024-11-21,8.5,150
-58,Cheese Pizza Slice,300,lunch,2024-11-21,8.0,150
-59,Shrimp Scampi,600,dinner,2024-11-21,12.0,100
-60,Mango Salsa Salmon,550,dinner,2024-11-21,15.0,50
-61,Greek Yogurt Parfait,250,breakfast,2024-11-22,6.0,150
-62,Raspberry Oat Muffin,200,breakfast,2024-11-22,5.0,100
-63,Mediterranean Veggie Wrap,400,lunch,2024-11-22,7.5,100
-64,Greek Salad,250,lunch,2024-11-22,8.0,150
-65,Eggplant Parmesan,500,dinner,2024-11-22,10.5,100
-66,Chicken Alfredo Pasta,550,dinner,2024-11-22,10.0,100
-67,Classic Waffles,400,breakfast,2024-11-23,7.0,150
-68,Chocolate Croissant,300,breakfast,2024-11-23,5.5,100
-69,Chicken Caesar Wrap,300,lunch,2024-11-23,8.0,150
-70,Spinach Mushroom Quiche,350,lunch,2024-11-23,9.0,50
-71,Lentil Stew,300,dinner,2024-11-23,8.5,100
-72,Shrimp Scampi,600,dinner,2024-11-23,12.0,100
-73,Banana Nut Bread,350,breakfast,2024-11-24,5.0,100
-74,Fruit Parfait,200,breakfast,2024-11-24,6.0,150
-75,Chicken Noodle Soup,300,lunch,2024-11-24,8.0,150
-76,Turkey BLT Sandwich,450,lunch,2024-11-24,9.0,100
-77,Mediterranean Veggie Wrap,400,dinner,2024-11-24,8.5,100
-78,Eggplant Parmesan,500,dinner,2024-11-24,10.5,100
-79,Scrambled Eggs and Bacon,500,breakfast,2024-11-25,8.0,150
-80,Classic Waffles,400,breakfast,2024-11-25,7.0,150
-81,Caesar Salad,300,lunch,2024-11-25,7.5,150
-82,Vegetable Stir Fry,400,lunch,2024-11-25,8.5,150
-83,Cheese Pizza Slice,300,dinner,2024-11-25,8.0,150
-84,Mango Salsa Salmon,550,dinner,2024-11-25,15.0,50
-85,Raspberry Oat Muffin,200,breakfast,2024-11-26,5.0,100
-86,Avocado Toast,300,breakfast,2024-11-26,6.5,100
-87,Mediterranean Veggie Wrap,400,lunch,2024-11-26,7.5,100
-88,Spinach Mushroom Quiche,350,lunch,2024-11-26,9.0,50
-89,Beef Tacos,600,dinner,2024-11-26,10.0,100
-90,Banana Nut Bread,350,dinner,2024-11-26,5.0,100
-91,Banana Pancakes,400,breakfast,2024-11-27,7.5,150
-92,Greek Yogurt Parfait,250,breakfast,2024-11-27,6.0,150
-93,Chicken Caesar Wrap,300,lunch,2024-11-27,8.0,150
-94,Greek Salad,250,lunch,2024-11-27,8.0,150
-95,Vegetable Curry,400,dinner,2024-11-27,9.0,150
-96,BBQ Pulled Pork Sandwich,700,dinner,2024-11-27,9.0,50
-97,Scrambled Eggs and Bacon,500,breakfast,2024-11-28,8.0,150
-98,Fruit Parfait,200,breakfast,2024-11-28,6.0,150
-99,Vegetable Soup,200,lunch,2024-11-28,7.0,150
-100,Caesar Salad,300,lunch,2024-11-28,7.5,150
+1,Oatmeal,150,breakfast,2024-12-02,5.0,100
+2,Pancakes,200,breakfast,2024-12-02,6.0,100
+3,Toast,250,breakfast,2024-12-02,4.0,100
+4,Granola,180,breakfast,2024-12-02,5.5,100
+5,Omlette,300,breakfast,2024-12-02,7.0,50
+6,Yogurt,120,breakfast,2024-12-02,4.5,200
+7,Bagel,220,breakfast,2024-12-02,5.5,150
+8,Banana,100,breakfast,2024-12-02,1.0,200
+9,Apple,95,snack,2024-12-02,1.5,200
+10,Orange,80,snack,2024-12-02,1.5,200
+11,Salad,150,lunch,2024-12-02,6.0,100
+12,Sandwich,350,lunch,2024-12-02,7.5,100
+13,Wrap,400,lunch,2024-12-02,8.0,100
+14,Soup,250,lunch,2024-12-02,5.0,150
+15,Pizza,300,lunch,2024-12-02,8.5,150
+16,Pasta,450,lunch,2024-12-02,9.0,100
+17,Chicken,500,lunch,2024-12-02,10.0,100
+18,Tacos,600,lunch,2024-12-02,9.5,100
+19,Burrito,700,lunch,2024-12-02,10.0,100
+20,Curry,400,dinner,2024-12-02,8.5,100
+21,Steak,600,dinner,2024-12-02,12.0,100
+22,Salmon,550,dinner,2024-12-02,15.0,50
+23,Tofu,300,dinner,2024-12-02,8.0,100
+24,Quiche,350,dinner,2024-12-02,9.0,50
+25,Waffles,400,breakfast,2024-12-03,7.0,150
+26,Muffin,350,breakfast,2024-12-03,5.0,100
+27,Cereal,200,breakfast,2024-12-03,3.0,150
+28,Smoothie,180,breakfast,2024-12-03,4.5,100
+29,Milk,150,breakfast,2024-12-03,2.0,200
+30,Eggs,200,breakfast,2024-12-03,6.0,150
+31,FruitMix,120,snack,2024-12-03,3.5,100
+32,Noodles,300,lunch,2024-12-03,8.0,150
+33,Dumpling,280,lunch,2024-12-03,9.0,150
+34,StirFry,350,lunch,2024-12-03,8.5,100
+35,Falafel,400,lunch,2024-12-03,9.5,100
+36,Chili,500,dinner,2024-12-03,10.0,100
+37,Lasagna,600,dinner,2024-12-03,11.0,50
+38,Cabbage,150,dinner,2024-12-03,7.0,100
+39,Ratatoui,200,dinner,2024-12-03,8.0,150
+40,Shrimp,300,dinner,2024-12-03,12.0,50
+41,Hashbrowns,300,breakfast,2024-12-04,5.0,100
+42,Toasties,400,breakfast,2024-12-04,4.0,200
+43,FrenchFry,500,snack,2024-12-04,6.0,150
+44,BreadRoll,350,snack,2024-12-04,4.0,150
+45,Baguette,300,snack,2024-12-04,4.5,100
+46,RiceBowl,400,lunch,2024-12-04,8.0,150
+47,Soba,300,lunch,2024-12-04,7.5,100
+48,BBQPlate,600,lunch,2024-12-04,10.0,50
+49,PokeBowl,450,lunch,2024-12-04,11.0,100
+50,SushiRoll,350,dinner,2024-12-04,9.0,100
+51,Dosa,300,dinner,2024-12-04,8.0,50
+52,Katsu,600,dinner,2024-12-04,10.5,100
+53,Gyros,450,dinner,2024-12-04,9.0,100
+54,Meatball,500,dinner,2024-12-04,10.0,150
+55,Tiramisu,400,dessert,2024-12-05,7.0,100
+56,Pudding,200,dessert,2024-12-05,4.0,150
+57,Brownie,350,dessert,2024-12-05,5.0,150
+58,IceCream,300,dessert,2024-12-05,4.5,100
+59,PieSlice,250,dessert,2024-12-05,3.5,100
+60,Cupcake,400,dessert,2024-12-05,5.0,150
+61,Fritters,400,snack,2024-12-05,7.5,100
+62,Wings,500,snack,2024-12-05,9.0,50
+63,Biryani,600,dinner,2024-12-05,11.0,150
+64,Shawarma,450,lunch,2024-12-05,10.0,150
+65,MacCheese,400,lunch,2024-12-05,8.0,150
+66,OnionSoup,300,dinner,2024-12-05,7.5,150
+67,OkraStew,200,dinner,2024-12-05,6.0,150
+68,Shepherds,600,dinner,2024-12-05,11.0,50
+69,GarlicNan,300,snack,2024-12-06,5.0,200
+70,PitaBread,200,snack,2024-12-06,4.5,150
+71,Hummus,180,snack,2024-12-06,4.0,150
+72,CheeseBrd,300,snack,2024-12-06,6.0,100
+73,Biscotti,150,snack,2024-12-06,3.0,200
+74,Latte,100,drink,2024-12-06,2.5,300
+75,Cappucin,100,drink,2024-12-06,2.5,300
+76,Espresso,50,drink,2024-12-06,2.0,300
+77,Mocha,200,drink,2024-12-06,3.0,300
+78,Tea,50,drink,2024-12-06,1.5,300
+79,HotChoc,200,drink,2024-12-06,2.0,300
+80,FrenchTo,350,breakfast,2024-12-06,7.5,100
+81,Croissant,250,breakfast,2024-12-06,6.0,150
+82,Pancakes,300,breakfast,2024-12-06,7.5,150
+83,SpinachDs,300,lunch,2024-12-06,8.5,100
+84,AvocadoBr,400,lunch,2024-12-06,9.0,150
+85,MisoSoup,200,lunch,2024-12-06,6.5,150
+86,ClamChow,400,lunch,2024-12-06,7.5,100
+87,Coffee,100,drink,2024-12-06,2.0,300
+88,CheesCake,400,dessert,2024-12-06,6.5,100
+89,ChocoCake,450,dessert,2024-12-06,7.0,100
+90,FruitTart,350,dessert,2024-12-06,5.0,150
+91,PoundCake,300,dessert,2024-12-06,4.5,150
+92,Crumble,300,dessert,2024-12-06,5.0,100
+93,ApplePie,300,dessert,2024-12-06,5.5,100
+94,Doughnut,400,snack,2024-12-06,4.0,100
+95,Strudel,400,snack,2024-12-06,5.0,150
+96,MintChoc,300,dessert,2024-12-06,5.5,100
+97,PBcookie,300,dessert,2024-12-06,4.5,150
+98,Macaron,250,dessert,2024-12-06,6.0,100
+99,LavaCake,400,dessert,2024-12-06,7.0,100
+100,Affogato,350,dessert,2024-12-06,6.5,150
+
+
