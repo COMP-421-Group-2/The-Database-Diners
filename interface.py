@@ -426,17 +426,18 @@ class AdminView(QWidget):
 
             # Update menu item quantities and insert transactions
             for item_id in ordered_items:
+                transaction_type = "to-go" if use_togo_box else "dine-in"
                 cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                    (selected_student, item_id, "dine-in", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, item_id, transaction_type, QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             # Insert a separate transaction for the to-go box if used
             if use_togo_box:
                 cursor.execute(
-                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
-                    (selected_student, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
+                    (selected_student, -1, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             db.commit()
@@ -513,17 +514,18 @@ class AdminView(QWidget):
 
             # Update menu item quantities and insert transactions
             for item_id in ordered_items:
+                transaction_type = "to-go" if use_togo_box else "dine-in"
                 cursor.execute("UPDATE Menu SET quantity = quantity - 1 WHERE item_id = %s", (item_id,))
                 cursor.execute(
                     "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
-                    (selected_student, item_id, "dine-in", QDate.currentDate().toString('yyyy-MM-dd'))
+                    (selected_student, item_id, transaction_type, QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             # Insert a separate transaction for the to-go box if used
             if use_togo_box:
                 cursor.execute(
-                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, NULL, %s, %s)",
-                    (selected_student, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
+                    "INSERT INTO Transactions (pid, item_id, transaction_type, transaction_date) VALUES (%s, %s, %s, %s)",
+                    (selected_student, -1, "to-go", QDate.currentDate().toString('yyyy-MM-dd'))
                 )
 
             db.commit()
