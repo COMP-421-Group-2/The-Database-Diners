@@ -12,8 +12,8 @@ import hashlib
 
 db = pymysql.connect(
     host='localhost',
-    user='haleyap',
-    password='421SQLpass!',
+    user='root',
+    password='',
     database='cafeteria',
 )
 cursor = db.cursor()

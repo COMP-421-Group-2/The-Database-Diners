@@ -73,7 +73,7 @@ item_id,item_name,calories_per_serving,meal_type,available_date,price,quantity
 72,CheeseBrd,300,snack,2024-12-06,6.0,100
 73,Biscotti,150,snack,2024-12-06,3.0,200
 74,Latte,100,drink,2024-12-06,2.5,300
-75,Cappucin,100,drink,2024-12-06,2.5,300
+75,Cappucino,100,drink,2024-12-06,2.5,300
 76,Espresso,50,drink,2024-12-06,2.0,300
 77,Mocha,200,drink,2024-12-06,3.0,300
 78,Tea,50,drink,2024-12-06,1.5,300
